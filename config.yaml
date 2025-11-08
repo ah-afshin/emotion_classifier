@@ -1,0 +1,40 @@
+# General settings
+general:
+  seed: 418
+  device: auto          # "cuda" if available, else "cpu"
+
+# Model settings
+model:
+  name: bilstm          # Options: bilstm, transformer
+  variant: max-pool      # Options: maxpool, lasttoken, featureextract, finetune
+  bilstm:
+    hidden_size: 256
+    num_layers: 3
+    dropout: 0.25
+  transformer:
+    dropout: 0.3
+    transformer_model: distilbert-base-uncased
+
+# Data settings
+data:
+  batch_size: 32
+  preprocessing:
+    max_length: 128
+    tokenizer: bert-base-uncased
+    # Note:
+    # GoEmotions dataset is already split into train/validation/test by the authors.
+    # Therefore, we don't define custom split ratios here.
+
+# Training settings
+training:
+  epochs: 15
+  lr: 0.0005
+  finetune_lr: 0.0001
+  optimizer: adam       # Options: adam, adamw, sgd
+
+# Save paths
+paths:
+  checkpoint: outputs/bilstm-maxpool/checkpoint.pt
+  encoder_checkpoint: outputs/transformer-finetune/bert
+  results: outputs/bilstm-maxpool/results/
+  log_path: outputs/bilstm-maxpool/train.log

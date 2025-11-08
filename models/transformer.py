@@ -29,8 +29,8 @@ class EmotionClassifierTransformer(nn.Module):
                 raise ValueError(f'undefined mode {mode}')
         
         self.head = nn.Sequential(
-            # nn.Linear(self.encoder.config.hidden_size, self.encoder.config.hidden_size),
-            # nn.ReLU(),      # these two layers are added just in case we wanted to make the head deeper
+            nn.Linear(self.encoder.config.hidden_size, self.encoder.config.hidden_size),
+            nn.ReLU(),        # these two layers are added just in case we wanted to make the head deeper
             nn.Dropout(dropout),
             nn.Linear(self.encoder.config.hidden_size, num_labels),
             # nn.Sigmoid()    # multi-label classification (commented so we use BCEWithLogits criterion)

@@ -22,7 +22,7 @@ pythonenv/
 # data-set and models
 data/raw/
 data/processed/
-checkpoints/
+outputs/
 *.pth
 *.pt
 *.bin

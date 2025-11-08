@@ -26,8 +26,9 @@ def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epoch
             optim.step()
             
             total_epoch_loss += loss.item()
-            progress_bar.set_postfix(loss=loss.item())        
-        print(f'epoch {epoch+1} | loss: {total_epoch_loss:.4f}')
+            progress_bar.set_postfix(loss=loss.item()) 
+        avg_epoch_loss = total_epoch_loss / len(dl)       
+        print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
 
 
 def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, mode, device, encoder_lr=None):
@@ -63,55 +64,71 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
             optim.step()
 
             total_epoch_loss += loss.item()
-            progress_bar.set_postfix(loss=loss.item())        
-        print(f'epoch {epoch+1} | loss: {total_epoch_loss:.4f}')
+            progress_bar.set_postfix(loss=loss.item())
+        avg_epoch_loss = total_epoch_loss / len(dl)
+        print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
 
 
 if __name__=="__main__":
-    from sys import argv, exit
-
+    import yaml, numpy, random, os
     from models.bilstm import EmotionClassifierBiLSTM
     from models.transformer import EmotionClassifierTransformer
     from data.preprocess import get_dataloaders
     from utils.text import get_vocab_size
-    from config import B, LR, EPOCHS, FINETUNE_LR
+    
+    with open('config.yaml') as f:
+        config = yaml.safe_load(f)
+    
+    B = config['data']['batch_size']
+    MAXLEN = config['data']['preprocessing']['max_length']
+    TOKENIZER = config['data']['preprocessing']['tokenizer']
+    train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name=TOKENIZER, max_length=MAXLEN)
+    
+    if config['general']['device'] == 'auto':
+        # agnostic device setup
+        device = 'cuda' if t.cuda.is_available() else 'cpu'
+    else:
+        device = config['general']['device']    
+    os.makedirs(
+        # path setup
+        os.path.dirname(config['paths']['checkpoint']),
+        exist_ok=True
+    )
 
-    device = 'cuda' if t.cuda.is_available() else 'cpu'
+    SEED = config['general']['seed']
+    t.manual_seed(SEED)
+    numpy.random.seed(SEED)
+    random.seed(SEED)
+    if device == 'cuda':
+        t.cuda.manual_seed_all(SEED)
+    
+    LR = config['training']['lr']
+    EPOCHS = config['training']['epochs']
+    FINETUNE_LR = config['training']['finetune_lr']
+    OPTIMIZER = config['training']['optimizer']
 
-    if len(argv) != 3:
-        print('Usage: python train.py <model> <method>')
-        exit(1)
-
-    match (argv[1], argv[2]):
-        case ('bilstm', 'max-pool'):
-            train_dl, val_dl, test_dl = get_dataloaders(batch_size=B)
-            model = EmotionClassifierBiLSTM(vocab_size=get_vocab_size())
+    match config['model']['name']:
+        case 'bilstm':
+            model = EmotionClassifierBiLSTM(
+                            vocab_size=get_vocab_size(),
+                            hidden_size=config['model']['bilstm']['hidden_size'],
+                            num_layers=config['model']['bilstm']['num_layers'],
+                            dropout=config['model']['bilstm']['dropout']
+                    )
             print('training started.')
-            train_bilstm(model, train_dl, LR, EPOCHS, 'max-pool', device)
-            t.save(model.state_dict(), "checkpoints/bilstm_maxpool.pt")
+            train_bilstm(model, train_dl, LR, EPOCHS, config['model']['variant'], device)
         
-        case ('bilstm', 'last-token'):
-            train_dl, val_dl, test_dl = get_dataloaders(batch_size=B)
-            model = EmotionClassifierBiLSTM(vocab_size=get_vocab_size())
-            print('training started.')
-            train_bilstm(model, train_dl, LR, EPOCHS, 'last-token', device)
-            t.save(model.state_dict(), "checkpoints/bilstm_lasttoken.pt")
-        
-        case ('transformer', 'feature-extract'):
-            train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name='distilbert-base-uncased')
-            model = EmotionClassifierTransformer('feature-extract')
-            print('training started.')
-            train_transformer(model, train_dl, LR, EPOCHS, 'feature-extract', device)
-            model.encoder.config.save_pretrained("checkpoints/bert")
-            t.save(model.state_dict(), "checkpoints/transformer_featureextract.pt")
-        
-        case ('transformer', 'fine-tune'):
-            train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name='distilbert-base-uncased')
-            model = EmotionClassifierTransformer('fine-tune')
+        case 'transformer':
+            model = EmotionClassifierTransformer(
+                            mode=config['model']['variant'],
+                            model_name=config['model']['transformer']['transformer_model'],
+                            dropout=config['model']['transformer']['dropout']
+                    )
             print('training started.')
             train_transformer(model, train_dl, LR, EPOCHS, 'fine-tune', device, FINETUNE_LR)
-            model.encoder.config.save_pretrained("checkpoints/bert")
-            t.save(model.state_dict(), "checkpoints/transformer_finetune.pt")
+            model.encoder.config.save_pretrained(config['paths']['encoder_checkpoint'])
         
         case _:
-            print('Undefined model and/or method.')
+            raise ValueError(f"Undefined model {config['model']['name']}.")
+
+    t.save(model.state_dict(), config['paths']['checkpoint'])

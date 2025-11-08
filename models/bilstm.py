@@ -4,15 +4,15 @@ from torch import nn
 
 
 class EmotionClassifierBiLSTM(nn.Module):
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, hidden_size=256, num_layers=3, dropout=0.25):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim=128)
         self.lstm = nn.LSTM(
             input_size=128,             # same as embedding_dim
-            hidden_size=256,
-            num_layers=3,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
             bidirectional=True,
-            dropout=0.25,
+            dropout=dropout,
             batch_first=True            # this way it's compatible with dataloaders
         )
         self.fc = nn.Linear(256*2, 28)  # hidden_size*2 -> output_size (=emotion_num)
