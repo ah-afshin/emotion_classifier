@@ -1,6 +1,15 @@
 import pathlib, numpy, random, os, logging, shutil, torch as t
 
 
+def setup_logger(log_path):
+    logging.basicConfig(
+        filename=log_path,
+        filemode='w',
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        level=logging.INFO
+    )
+    return logging.getLogger(__name__)
+
 def save_config(config_path, output_dir):
     path = pathlib.Path(output_dir) / "config.yaml"
     shutil.copy(config_path, path)

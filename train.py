@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 
 
-def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, method, device):
+def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, method, device, logger):
     optim = t.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss()
 
@@ -29,9 +29,10 @@ def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epoch
             progress_bar.set_postfix(loss=loss.item()) 
         avg_epoch_loss = total_epoch_loss / len(dl)       
         print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
+        logger.info(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
 
 
-def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, mode, device, encoder_lr=None):
+def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, mode, device, logger, encoder_lr=None):
     model.to(device=device)
     model.train()
 
@@ -46,6 +47,7 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
         optim = t.optim.AdamW(optimizer_grouped_parameters)     # AdamW works better with transformers
         criterion = nn.BCEWithLogitsLoss()
     else:
+        logger.error(f'ValueError: undefined mode: {mode}')
         raise ValueError(f'undefined mode: {mode}')
 
     for epoch in range(epochs):
@@ -67,6 +69,7 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
             progress_bar.set_postfix(loss=loss.item())
         avg_epoch_loss = total_epoch_loss / len(dl)
         print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
+        logger.info(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
 
 
 if __name__=="__main__":
@@ -80,6 +83,8 @@ if __name__=="__main__":
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
     
+    logger = setup_logger(config['paths']['log_path'])
+    logger.info("Configuration:\n" + yaml.dump(config, sort_keys=False))
     device = setup_device(config)
     save_config('config.yaml', config['paths']['output_dir'])
     setup_path(config)
@@ -104,7 +109,8 @@ if __name__=="__main__":
                             dropout=config['model']['bilstm']['dropout']
                     )
             print('training started.')
-            train_bilstm(model, train_dl, LR, EPOCHS, config['model']['variant'], device)
+            logger.info('training started.')
+            train_bilstm(model, train_dl, LR, EPOCHS, config['model']['variant'], device, logger)
         
         case 'transformer':
             model = EmotionClassifierTransformer(
@@ -113,10 +119,12 @@ if __name__=="__main__":
                             dropout=config['model']['transformer']['dropout']
                     )
             print('training started.')
-            train_transformer(model, train_dl, LR, EPOCHS, 'fine-tune', device, FINETUNE_LR)
+            logger.info('training started.')
+            train_transformer(model, train_dl, LR, EPOCHS, 'fine-tune', device, logger, FINETUNE_LR)
             model.encoder.config.save_pretrained(config['paths']['encoder_checkpoint'])
         
         case _:
+            logger.error(f"ValueError: Undefined model {config['model']['name']}.")
             raise ValueError(f"Undefined model {config['model']['name']}.")
 
     t.save(model.state_dict(), config['paths']['checkpoint'])
