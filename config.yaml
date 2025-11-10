@@ -34,6 +34,7 @@ training:
 
 # Save paths
 paths:
+  output_dir: outputs/bilstm-maxpool/
   checkpoint: outputs/bilstm-maxpool/checkpoint.pt
   encoder_checkpoint: outputs/transformer-finetune/bert
   results: outputs/bilstm-maxpool/results/

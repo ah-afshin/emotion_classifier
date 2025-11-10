@@ -70,7 +70,8 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
 
 
 if __name__=="__main__":
-    import yaml, numpy, random, os
+    import yaml
+    from helpers import setup_device, setup_logger, save_config, set_seed, setup_path
     from models.bilstm import EmotionClassifierBiLSTM
     from models.transformer import EmotionClassifierTransformer
     from data.preprocess import get_dataloaders
@@ -79,28 +80,15 @@ if __name__=="__main__":
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
     
+    device = setup_device(config)
+    save_config('config.yaml', config['paths']['output_dir'])
+    setup_path(config)
+    set_seed(config, device)
+
     B = config['data']['batch_size']
     MAXLEN = config['data']['preprocessing']['max_length']
     TOKENIZER = config['data']['preprocessing']['tokenizer']
     train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name=TOKENIZER, max_length=MAXLEN)
-    
-    if config['general']['device'] == 'auto':
-        # agnostic device setup
-        device = 'cuda' if t.cuda.is_available() else 'cpu'
-    else:
-        device = config['general']['device']    
-    os.makedirs(
-        # path setup
-        os.path.dirname(config['paths']['checkpoint']),
-        exist_ok=True
-    )
-
-    SEED = config['general']['seed']
-    t.manual_seed(SEED)
-    numpy.random.seed(SEED)
-    random.seed(SEED)
-    if device == 'cuda':
-        t.cuda.manual_seed_all(SEED)
     
     LR = config['training']['lr']
     EPOCHS = config['training']['epochs']
