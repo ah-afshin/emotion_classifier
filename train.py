@@ -4,7 +4,22 @@ from tqdm import tqdm
 
 
 
-def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, method, device, logger):
+def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criterion, device, method=None):
+    for batch in validation_dl:
+        x = batch["input_ids"].to(device)
+        mask = batch["attention_mask"].to(device)
+        y = batch["labels"].to(device)
+
+        if method:
+            logit = model(x, mask, method)
+        else:
+            logit = model(x, mask)
+        loss = criterion(logit, y.float())
+        total_loss += loss.item()
+    return total_loss / len(validation_dl)  
+
+
+def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, lr: float, epochs: int, method, device, logger):
     optim = t.optim.Adam(model.parameters(), lr=lr)
     criterion = nn.BCEWithLogitsLoss()
 
@@ -28,8 +43,9 @@ def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epoch
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item()) 
         avg_epoch_loss = total_epoch_loss / len(dl)       
-        print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
-        logger.info(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
+        val_loss = validation(model, val_dl, criterion, device, method)
+        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
+        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
 
 
 def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, mode, device, logger, encoder_lr=None):
@@ -68,8 +84,9 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item())
         avg_epoch_loss = total_epoch_loss / len(dl)
-        print(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
-        logger.info(f'epoch {epoch+1} | loss: {avg_epoch_loss:.4f}')
+        val_loss = validation(model, val_dl, criterion, device)
+        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
+        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
 
 
 if __name__=="__main__":
