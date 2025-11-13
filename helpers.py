@@ -21,9 +21,9 @@ def setup_device(config: dict):
     else:
         return config['general']['device']
 
-def setup_path(config: dict):
+def setup_path(path):
     os.makedirs(
-        os.path.dirname(config['paths']['checkpoint']),
+        os.path.dirname(path),
         exist_ok=True
     )
 

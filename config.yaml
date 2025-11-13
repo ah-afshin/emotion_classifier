@@ -32,10 +32,5 @@ training:
   finetune_lr: 0.0001
   optimizer: adam       # Options: adam, adamw, sgd
 
-# Save paths
-paths:
-  output_dir: outputs/bilstm-maxpool/
-  checkpoint: outputs/bilstm-maxpool/checkpoint.pt
-  encoder_checkpoint: outputs/transformer-finetune/bert
-  results: outputs/bilstm-maxpool/results/
-  log_path: outputs/bilstm-maxpool/train.log
+# Save path
+output_dir: outputs/

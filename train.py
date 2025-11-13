@@ -83,22 +83,23 @@ if __name__=="__main__":
     with open('config.yaml') as f:
         config = yaml.safe_load(f)
     
-    logger = setup_logger(config['paths']['log_path'])
-    logger.info("Configuration:\n" + yaml.dump(config, sort_keys=False))
+    path = config['output_dir'] + f"{config['model']['name']}-{config['model']['variant']}/"
     device = setup_device(config)
-    save_config('config.yaml', config['paths']['output_dir'])
-    setup_path(config)
+    save_config('config.yaml', path)
+    setup_path(path)
     set_seed(config, device)
+    logger = setup_logger(path+'train.log')
+    logger.info("Configuration:\n" + yaml.dump(config, sort_keys=False))
 
     B = config['data']['batch_size']
-    MAXLEN = config['data']['preprocessing']['max_length']
-    TOKENIZER = config['data']['preprocessing']['tokenizer']
-    train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name=TOKENIZER, max_length=MAXLEN)
+    max_len = config['data']['preprocessing']['max_length']
+    tokenizer = config['data']['preprocessing']['tokenizer']
+    train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name=tokenizer, max_length=max_len)
     
     LR = config['training']['lr']
-    EPOCHS = config['training']['epochs']
-    FINETUNE_LR = config['training']['finetune_lr']
-    OPTIMIZER = config['training']['optimizer']
+    epochs = config['training']['epochs']
+    finetune_LR = config['training']['finetune_lr']
+    optimizer = config['training']['optimizer']
 
     match config['model']['name']:
         case 'bilstm':
@@ -110,7 +111,7 @@ if __name__=="__main__":
                     )
             print('training started.')
             logger.info('training started.')
-            train_bilstm(model, train_dl, LR, EPOCHS, config['model']['variant'], device, logger)
+            train_bilstm(model, train_dl, LR, epochs, config['model']['variant'], device, logger)
         
         case 'transformer':
             model = EmotionClassifierTransformer(
@@ -120,11 +121,11 @@ if __name__=="__main__":
                     )
             print('training started.')
             logger.info('training started.')
-            train_transformer(model, train_dl, LR, EPOCHS, 'fine-tune', device, logger, FINETUNE_LR)
-            model.encoder.config.save_pretrained(config['paths']['encoder_checkpoint'])
+            train_transformer(model, train_dl, LR, epochs, 'fine-tune', device, logger, finetune_LR)
+            model.encoder.config.save_pretrained(path+'bert/')
         
         case _:
             logger.error(f"ValueError: Undefined model {config['model']['name']}.")
             raise ValueError(f"Undefined model {config['model']['name']}.")
 
-    t.save(model.state_dict(), config['paths']['checkpoint'])
+    t.save(model.state_dict(), path+'last_epoch.pt')
