@@ -5,29 +5,40 @@ from tqdm import tqdm
 
 
 def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criterion, device, method=None):
-    for batch in validation_dl:
-        x = batch["input_ids"].to(device)
-        mask = batch["attention_mask"].to(device)
-        y = batch["labels"].to(device)
+    total_loss = 0
+    model.eval()
+    with t.no_grad():
+        for batch in validation_dl:
+            x = batch["input_ids"].to(device)
+            mask = batch["attention_mask"].to(device)
+            y = batch["labels"].to(device)
 
-        if method:
-            logit = model(x, mask, method)
-        else:
-            logit = model(x, mask)
-        loss = criterion(logit, y.float())
-        total_loss += loss.item()
+            if method:
+                logit = model(x, mask, method)
+            else:
+                logit = model(x, mask)
+            loss = criterion(logit, y.float())
+            total_loss += loss.item()
     return total_loss / len(validation_dl)  
 
 
-def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, lr: float, epochs: int, method, device, logger):
-    optim = t.optim.Adam(model.parameters(), lr=lr)
+def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, config, logger):
+    LR = config['training']['lr']
+    epochs = config['training']['epochs']
+    device = config['device']
+    method = config['model']['variant']
+    path = config['path']
+    # optimizer = config['training']['optimizer']
+    
+    optim = t.optim.Adam(model.parameters(), lr=LR)
     criterion = nn.BCEWithLogitsLoss()
 
+    best_loss = float('inf')
     model.to(device)
     model.train()
     for epoch in range(epochs):
         total_epoch_loss = 0
-        progress_bar = tqdm(dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
+        progress_bar = tqdm(train_dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
 
         for batch in progress_bar:
             x = batch["input_ids"].to(device)
@@ -42,23 +53,37 @@ def train_bilstm(model: nn.Module, dl: t.utils.data.DataLoader, val_dl: t.utils.
             
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item()) 
-        avg_epoch_loss = total_epoch_loss / len(dl)       
+        avg_epoch_loss = total_epoch_loss / len(train_dl)
         val_loss = validation(model, val_dl, criterion, device, method)
         print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
         logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
 
+        if val_loss < best_loss:
+            best_loss = val_loss
+            t.save(model.state_dict(), path+'best_model.pt')
+        else:
+            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
 
-def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, epochs: int, mode, device, logger, encoder_lr=None):
+def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, config, logger):
+    LR = config['training']['lr']
+    epochs = config['training']['epochs']
+    finetune_LR = config['training'].get('finetune_lr', None)
+    device = config['device']
+    mode = config['model']['variant']
+    path = config['path']
+    # optimizer = config['training']['optimizer']
+
+    best_loss = float('inf')
     model.to(device=device)
     model.train()
 
     if mode=='feature-extract':
-        optim = t.optim.Adam(model.head.parameters(), lr=lr)
+        optim = t.optim.Adam(model.head.parameters(), lr=LR)
         criterion = nn.BCEWithLogitsLoss()
     elif mode=='fine-tune':
         optimizer_grouped_parameters = [
-            {"params": model.encoder.parameters(), "lr": encoder_lr},
-            {"params": model.head.parameters(), "lr": lr}
+            {"params": model.encoder.parameters(), "lr": finetune_LR},
+            {"params": model.head.parameters(), "lr": LR}
         ]
         optim = t.optim.AdamW(optimizer_grouped_parameters)     # AdamW works better with transformers
         criterion = nn.BCEWithLogitsLoss()
@@ -68,7 +93,7 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
 
     for epoch in range(epochs):
         total_epoch_loss = 0
-        progress_bar = tqdm(dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
+        progress_bar = tqdm(train_dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
 
         for batch in progress_bar:
             x = batch["input_ids"].to(device)
@@ -83,10 +108,16 @@ def train_transformer(model: nn.Module, dl: t.utils.data.DataLoader, lr: float, 
 
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item())
-        avg_epoch_loss = total_epoch_loss / len(dl)
+        avg_epoch_loss = total_epoch_loss / len(train_dl)
         val_loss = validation(model, val_dl, criterion, device)
         print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
         logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
+
+        if val_loss < best_loss:
+            best_loss = val_loss
+            t.save(model.state_dict(), path+'best_model.pt')
+        else:
+            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
 
 
 if __name__=="__main__":
@@ -102,6 +133,9 @@ if __name__=="__main__":
     
     path = config['output_dir'] + f"{config['model']['name']}-{config['model']['variant']}/"
     device = setup_device(config)
+    config['device'] = device
+    config['path'] = path
+    
     save_config('config.yaml', path)
     setup_path(path)
     set_seed(config, device)
@@ -111,12 +145,7 @@ if __name__=="__main__":
     B = config['data']['batch_size']
     max_len = config['data']['preprocessing']['max_length']
     tokenizer = config['data']['preprocessing']['tokenizer']
-    train_dl, val_dl, test_dl = get_dataloaders(batch_size=B, tokenizer_name=tokenizer, max_length=max_len)
-    
-    LR = config['training']['lr']
-    epochs = config['training']['epochs']
-    finetune_LR = config['training']['finetune_lr']
-    optimizer = config['training']['optimizer']
+    train_dl, val_dl, _ = get_dataloaders(batch_size=B, tokenizer_name=tokenizer, max_length=max_len)
 
     match config['model']['name']:
         case 'bilstm':
@@ -128,7 +157,7 @@ if __name__=="__main__":
                     )
             print('training started.')
             logger.info('training started.')
-            train_bilstm(model, train_dl, LR, epochs, config['model']['variant'], device, logger)
+            train_bilstm(model, train_dl, val_dl, config, logger)
         
         case 'transformer':
             model = EmotionClassifierTransformer(
@@ -138,7 +167,7 @@ if __name__=="__main__":
                     )
             print('training started.')
             logger.info('training started.')
-            train_transformer(model, train_dl, LR, epochs, 'fine-tune', device, logger, finetune_LR)
+            train_transformer(model, train_dl, val_dl, config, logger)
             model.encoder.config.save_pretrained(path+'bert/')
         
         case _:

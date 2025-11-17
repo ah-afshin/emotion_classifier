@@ -1,12 +1,12 @@
 # General settings
 general:
   seed: 418
-  device: auto          # "cuda" if available, else "cpu"
+  device: auto            # "cuda" if available, else "cpu"
 
 # Model settings
 model:
-  name: bilstm          # Options: bilstm, transformer
-  variant: max-pool      # Options: maxpool, lasttoken, featureextract, finetune
+  name: bilstm            # Options: bilstm, transformer
+  variant: max-pool       # Options: max-pool, last-token, feature-extract, fine-tune
   bilstm:
     hidden_size: 256
     num_layers: 3
@@ -30,7 +30,7 @@ training:
   epochs: 15
   lr: 0.0005
   finetune_lr: 0.0001
-  optimizer: adam       # Options: adam, adamw, sgd
+  # optimizer: adam       # Options: adam, adamw, sgd
 
 # Save path
 output_dir: outputs/
