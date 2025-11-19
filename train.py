@@ -75,7 +75,6 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
 
     best_loss = float('inf')
     model.to(device=device)
-    model.train()
 
     if mode=='feature-extract':
         optim = t.optim.Adam(model.head.parameters(), lr=LR)
@@ -92,6 +91,7 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
         raise ValueError(f'undefined mode: {mode}')
 
     for epoch in range(epochs):
+        model.train()
         total_epoch_loss = 0
         progress_bar = tqdm(train_dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
 
@@ -133,11 +133,12 @@ if __name__=="__main__":
     
     path = config['output_dir'] + f"{config['model']['name']}-{config['model']['variant']}/"
     device = setup_device(config)
+    print(f'using device: {device}')
     config['device'] = device
     config['path'] = path
     
-    save_config('config.yaml', path)
     setup_path(path)
+    save_config('config.yaml', path)
     set_seed(config, device)
     logger = setup_logger(path+'train.log')
     logger.info("Configuration:\n" + yaml.dump(config, sort_keys=False))
