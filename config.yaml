@@ -2,6 +2,7 @@
 general:
   seed: 418
   device: auto            # "cuda" if available, else "cpu"
+  threshold: 0.6          # threshold for label prediction
 
 # Model settings
 model:
@@ -27,10 +28,11 @@ data:
 
 # Training settings
 training:
-  epochs: 15
+  epochs: 20
   lr: 0.0005
   finetune_lr: 0.0001
   # optimizer: adam       # Options: adam, adamw, sgd
+  patience: 3
 
 # Save path
 output_dir: outputs/

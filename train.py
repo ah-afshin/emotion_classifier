@@ -1,12 +1,18 @@
+import yaml
 import torch as t
+import numpy as np
 from torch import nn
 from tqdm import tqdm
+from utils.metrics import compute_metrics
 
 
 
-def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criterion, device, method=None):
+def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criterion, threshold, device, method=None):
     total_loss = 0
+    y_true_list = []
+    y_pred_list = []
     model.eval()
+    
     with t.no_grad():
         for batch in validation_dl:
             x = batch["input_ids"].to(device)
@@ -19,7 +25,17 @@ def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criteri
                 logit = model(x, mask)
             loss = criterion(logit, y.float())
             total_loss += loss.item()
-    return total_loss / len(validation_dl)  
+
+            prob = t.sigmoid(logit)
+            pred = (prob > threshold).int().cpu().numpy()
+            y_true_list.append(y.cpu().numpy().astype(int))
+            y_pred_list.append(pred)
+        
+        y_true = np.concatenate(y_true_list, axis=0)        # shape: (n_samples, num_labels)
+        y_pred = np.concatenate(y_true_list, axis=0)
+    metrics = compute_metrics(y_true, y_pred)
+    metrics['val-loss'] = total_loss / len(validation_dl)
+    return metrics  
 
 
 def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, config, logger):
@@ -28,12 +44,16 @@ def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.
     device = config['device']
     method = config['model']['variant']
     path = config['path']
+    patience = config['training']['patience']
+    threshold = config['general']['threshold']
     # optimizer = config['training']['optimizer']
     
     optim = t.optim.Adam(model.parameters(), lr=LR)
     criterion = nn.BCEWithLogitsLoss()
 
-    best_loss = float('inf')
+    best_metric = float('-inf')
+    patience_counter = 0
+
     model.to(device)
     model.train()
     for epoch in range(epochs):
@@ -54,15 +74,24 @@ def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item()) 
         avg_epoch_loss = total_epoch_loss / len(train_dl)
-        val_loss = validation(model, val_dl, criterion, device, method)
-        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
-        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
+        metrics = validation(model, val_dl, criterion, threshold, device, method)
+        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f} | f1 score: {metrics["f1-micro"]}')
+        logger.info(f'\nepoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f}')
+        logger.info("Metrics:\n" + yaml.dump(metrics, sort_keys=False))
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        # if val_loss < best_loss:
+        if metrics['f1-micro']>best_metric:
+            best_metric = metrics['f1-micro']
+            patience_counter = 0
             t.save(model.state_dict(), path+'best_model.pt')
         else:
+            patience_counter += 1
             logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
+            if patience_counter>=patience:
+                print('Trainig has stopped. (early stopping triggered)')
+                logger.info('Early stopping triggered.')
+                break
+    
 
 def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.utils.data.DataLoader, config, logger):
     LR = config['training']['lr']
@@ -71,9 +100,12 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
     device = config['device']
     mode = config['model']['variant']
     path = config['path']
+    patience = config['training']['patience']
+    threshold = config['general']['threshold']
     # optimizer = config['training']['optimizer']
 
-    best_loss = float('inf')
+    best_metric = float('-inf')
+    patience_counter = 0
     model.to(device=device)
 
     if mode=='feature-extract':
@@ -109,19 +141,25 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item())
         avg_epoch_loss = total_epoch_loss / len(train_dl)
-        val_loss = validation(model, val_dl, criterion, device)
-        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
-        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {val_loss:.4f}')
+        metrics = validation(model, val_dl, criterion, threshold, device)
+        print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f} | f1 score: {metrics["f1-micro"]}')
+        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f}')
 
-        if val_loss < best_loss:
-            best_loss = val_loss
+        # if val_loss < best_loss:
+        if metrics['f1-micro'] > best_metric:
+            best_metric = metrics['f1-micro']
+            patience_counter = 0
             t.save(model.state_dict(), path+'best_model.pt')
         else:
+            patience_counter += 1
             logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
+            if patience_counter>=patience:
+                print('Trainig has stopped. (early stopping triggered)')
+                logger.info('Early stopping triggered.')
+                break
 
 
 if __name__=="__main__":
-    import yaml
     from helpers import setup_device, setup_logger, save_config, set_seed, setup_path
     from models.bilstm import EmotionClassifierBiLSTM
     from models.transformer import EmotionClassifierTransformer
