@@ -1,0 +1,25 @@
+general:
+  seed: 418
+  device: auto
+  threshold: 0.6
+
+model:
+  name: transformer
+  variant: feature-extract
+  transformer:
+    dropout: 0.3
+    transformer_model: distilbert-base-uncased
+
+data:
+  batch_size: 32
+  preprocessing:
+    max_length: 128
+    tokenizer: bert-base-uncased
+
+training:
+  epochs: 15
+  lr: 0.0005
+  # optimizer: adam
+  patience: 3
+
+output_dir: outputs/

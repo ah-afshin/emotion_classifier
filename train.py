@@ -32,7 +32,7 @@ def validation(model: nn.Module, validation_dl: t.utils.data.DataLoader, criteri
             y_pred_list.append(pred)
         
         y_true = np.concatenate(y_true_list, axis=0)        # shape: (n_samples, num_labels)
-        y_pred = np.concatenate(y_true_list, axis=0)
+        y_pred = np.concatenate(y_pred_list, axis=0)
     metrics = compute_metrics(y_true, y_pred)
     metrics['val-loss'] = total_loss / len(validation_dl)
     return metrics  
@@ -53,10 +53,10 @@ def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.
 
     best_metric = float('-inf')
     patience_counter = 0
-
     model.to(device)
-    model.train()
+    
     for epoch in range(epochs):
+        model.train()
         total_epoch_loss = 0
         progress_bar = tqdm(train_dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
 
@@ -86,7 +86,7 @@ def train_bilstm(model: nn.Module, train_dl: t.utils.data.DataLoader, val_dl: t.
             t.save(model.state_dict(), path+'best_model.pt')
         else:
             patience_counter += 1
-            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
+            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.\n')
             if patience_counter>=patience:
                 print('Trainig has stopped. (early stopping triggered)')
                 logger.info('Early stopping triggered.')
@@ -143,7 +143,8 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
         avg_epoch_loss = total_epoch_loss / len(train_dl)
         metrics = validation(model, val_dl, criterion, threshold, device)
         print(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f} | f1 score: {metrics["f1-micro"]}')
-        logger.info(f'epoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f}')
+        logger.info(f'\nepoch {epoch+1} | train_loss: {avg_epoch_loss:.4f} | validation_loss: {metrics["val-loss"]:.4f}')
+        logger.info("Metrics:\n" + yaml.dump(metrics, sort_keys=False))
 
         # if val_loss < best_loss:
         if metrics['f1-micro'] > best_metric:
@@ -152,7 +153,7 @@ def train_transformer(model: nn.Module, train_dl: t.utils.data.DataLoader, val_d
             t.save(model.state_dict(), path+'best_model.pt')
         else:
             patience_counter += 1
-            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.')
+            logger.warning('Metrics on Validation dataset did not improved during this epoch of training.\n')
             if patience_counter>=patience:
                 print('Trainig has stopped. (early stopping triggered)')
                 logger.info('Early stopping triggered.')

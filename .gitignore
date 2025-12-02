@@ -22,7 +22,7 @@ pythonenv/
 # data-set and models
 data/raw/
 data/processed/
-outputs/
+# outputs/
 *.pth
 *.pt
 *.bin
@@ -30,7 +30,7 @@ outputs/
 
 # logs and reports
 logs/
-*.log
+# *.log
 mlruns/
 wandb/
 

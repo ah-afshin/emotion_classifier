@@ -1,0 +1,166 @@
+2025-11-28 23:30:49,169 - INFO - Configuration:
+general:
+  seed: 418
+  device: auto
+  threshold: 0.6
+model:
+  name: bilstm
+  variant: max-pool
+  bilstm:
+    hidden_size: 256
+    num_layers: 3
+    dropout: 0.25
+data:
+  batch_size: 32
+  preprocessing:
+    max_length: 128
+    tokenizer: bert-base-uncased
+training:
+  epochs: 15
+  lr: 0.0005
+  finetune_lr: 0.0001
+  patience: 3
+output_dir: outputs/
+device: cuda
+path: outputs/bilstm-max-pool/
+
+2025-11-28 23:30:53,796 - INFO - training started.
+2025-11-28 23:34:27,152 - INFO - 
+epoch 1 | train_loss: 0.1531 | validation_loss: 0.1469
+2025-11-28 23:34:27,152 - INFO - Metrics:
+accuracy: 0.0
+precision-micro: 0.0
+recall-micro: 0.0
+f1-micro: 0.0
+f1-macro: 0.0
+f1-samples: 0.0
+hamming-loss: 0.04199357590437576
+val-loss: 0.14692242592573165
+
+2025-11-28 23:38:08,703 - INFO - 
+epoch 2 | train_loss: 0.1339 | validation_loss: 0.1178
+2025-11-28 23:38:08,703 - INFO - Metrics:
+accuracy: 0.10910431256911168
+precision-micro: 0.8574610244988864
+recall-micro: 0.1206896551724138
+f1-micro: 0.21159659247045892
+f1-macro: 0.09906301374948938
+f1-samples: 0.13041528443297704
+hamming-loss: 0.03776789005318309
+val-loss: 0.11779366021647172
+
+2025-11-28 23:41:47,897 - INFO - 
+epoch 3 | train_loss: 0.1119 | validation_loss: 0.1068
+2025-11-28 23:41:47,897 - INFO - Metrics:
+accuracy: 0.27110210099520826
+precision-micro: 0.7295751633986928
+recall-micro: 0.2799373040752351
+f1-micro: 0.4046216583597643
+f1-macro: 0.184991096410774
+f1-samples: 0.3071507556210837
+hamming-loss: 0.0345953346321942
+val-loss: 0.10679044109933516
+
+2025-11-28 23:45:28,277 - INFO - 
+epoch 4 | train_loss: 0.1011 | validation_loss: 0.0995
+2025-11-28 23:45:28,277 - INFO - Metrics:
+accuracy: 0.3267600442314781
+precision-micro: 0.7468130311614731
+recall-micro: 0.330564263322884
+f1-micro: 0.45827900912646674
+f1-macro: 0.21889581371807068
+f1-samples: 0.36425236515542453
+hamming-loss: 0.03281817703122532
+val-loss: 0.09947616387816037
+
+2025-11-28 23:50:59,634 - INFO - 
+epoch 5 | train_loss: 0.0916 | validation_loss: 0.0956
+2025-11-28 23:50:59,634 - INFO - Metrics:
+accuracy: 0.3527460375967564
+precision-micro: 0.7388676844783715
+recall-micro: 0.3641065830721003
+f1-micro: 0.48782024359512816
+f1-macro: 0.2742573092404576
+f1-samples: 0.3977392800098292
+hamming-loss: 0.032107313990837764
+val-loss: 0.09557892866432667
+
+2025-11-28 23:58:02,852 - INFO - 
+epoch 6 | train_loss: 0.0832 | validation_loss: 0.0951
+2025-11-28 23:58:02,862 - INFO - Metrics:
+accuracy: 0.366015481017324
+precision-micro: 0.7288795686039544
+recall-micro: 0.3813479623824451
+f1-micro: 0.5007203128215681
+f1-macro: 0.3077773045730009
+f1-samples: 0.41511856493426713
+hamming-loss: 0.03193618029592965
+val-loss: 0.0951334887129419
+
+2025-11-29 00:01:42,698 - INFO - 
+epoch 7 | train_loss: 0.0744 | validation_loss: 0.0967
+2025-11-29 00:01:42,698 - INFO - Metrics:
+accuracy: 0.37817913748617765
+precision-micro: 0.7210982658959537
+recall-micro: 0.39106583072100315
+f1-micro: 0.5071138211382114
+f1-macro: 0.3211072228019657
+f1-samples: 0.4264160216242782
+hamming-loss: 0.031923016165552105
+val-loss: 0.09671998175189775
+
+2025-11-29 00:05:35,267 - INFO - 
+epoch 8 | train_loss: 0.0649 | validation_loss: 0.1034
+2025-11-29 00:05:35,267 - INFO - Metrics:
+accuracy: 0.39402875046074454
+precision-micro: 0.6816074188562596
+recall-micro: 0.41473354231974924
+f1-micro: 0.5156889495225102
+f1-macro: 0.3481116210701705
+f1-samples: 0.44867305565794324
+hamming-loss: 0.032712863988204936
+val-loss: 0.10336297566399855
+
+2025-11-29 00:09:10,245 - INFO - 
+epoch 9 | train_loss: 0.0556 | validation_loss: 0.1092
+2025-11-29 00:09:10,245 - INFO - Metrics:
+accuracy: 0.39679321784002947
+precision-micro: 0.6486744685932648
+recall-micro: 0.42570532915360504
+f1-micro: 0.5140531844421312
+f1-macro: 0.37313169447185207
+f1-samples: 0.45630298562476956
+hamming-loss: 0.03379890474435259
+val-loss: 0.10917217759963344
+
+2025-11-29 00:09:10,245 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2025-11-29 00:13:05,919 - INFO - 
+epoch 10 | train_loss: 0.0465 | validation_loss: 0.1232
+2025-11-29 00:13:05,919 - INFO - Metrics:
+accuracy: 0.4087725764835975
+precision-micro: 0.6273627362736274
+recall-micro: 0.4369905956112853
+f1-micro: 0.5151515151515152
+f1-macro: 0.38183065616581435
+f1-samples: 0.469332841872466
+hamming-loss: 0.03454267811068401
+val-loss: 0.12318410890943864
+
+2025-11-29 00:13:05,919 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2025-11-29 00:16:47,489 - INFO - 
+epoch 11 | train_loss: 0.0388 | validation_loss: 0.1312
+2025-11-29 00:16:47,489 - INFO - Metrics:
+accuracy: 0.39034279395503135
+precision-micro: 0.6016418232879671
+recall-micro: 0.43652037617554856
+f1-micro: 0.505949677536561
+f1-macro: 0.3811576088482601
+f1-samples: 0.46161076299299664
+hamming-loss: 0.03579985256173977
+val-loss: 0.13122217837063704
+
+2025-11-29 00:16:47,489 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2025-11-29 00:16:47,499 - INFO - Early stopping triggered.
