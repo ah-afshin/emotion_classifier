@@ -1,7 +1,7 @@
 general:
   seed: 418
   device: auto
-  threshold: 0.6
+  threshold: 0.3
 
 model:
   name: transformer

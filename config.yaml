@@ -1,40 +1,26 @@
-# Configurations Example:
-
-# General settings
 general:
   seed: 418
-  device: auto            # "cuda" if available, else "cpu"
-  threshold: 0.6          # threshold for label prediction
+  device: auto
+  threshold: 0.3
 
-# Model settings
 model:
-  name: bilstm            # Options: bilstm, transformer
-  variant: max-pool       # Options: max-pool, last-token, feature-extract, fine-tune
-  bilstm:
-    hidden_size: 256
-    num_layers: 3
-    dropout: 0.25
+  name: transformer
+  variant: fine-tune
   transformer:
     dropout: 0.3
     transformer_model: distilbert-base-uncased
 
-# Data settings
 data:
   batch_size: 32
   preprocessing:
     max_length: 128
     tokenizer: bert-base-uncased
-    # Note:
-    # GoEmotions dataset is already split into train/validation/test by the authors.
-    # Therefore, we don't define custom split ratios here.
 
-# Training settings
 training:
-  epochs: 20
+  epochs: 15
   lr: 0.0005
   finetune_lr: 0.0001
-  # optimizer: adam       # Options: adam, adamw, sgd
+  # optimizer: adam
   patience: 3
 
-# Save path
 output_dir: outputs/
