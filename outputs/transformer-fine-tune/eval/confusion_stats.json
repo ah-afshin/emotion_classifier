@@ -1,0 +1,170 @@
+{
+    "admiration": {
+        "true-negative": 4717,
+        "false-positive": 206,
+        "false-negative": 143,
+        "true-positive": 361
+    },
+    "amusement": {
+        "true-negative": 5079,
+        "false-positive": 84,
+        "false-negative": 28,
+        "true-positive": 236
+    },
+    "anger": {
+        "true-negative": 5172,
+        "false-positive": 57,
+        "false-negative": 113,
+        "true-positive": 85
+    },
+    "annoyance": {
+        "true-negative": 4647,
+        "false-positive": 460,
+        "false-negative": 145,
+        "true-positive": 175
+    },
+    "approval": {
+        "true-negative": 4710,
+        "false-positive": 366,
+        "false-negative": 187,
+        "true-positive": 164
+    },
+    "caring": {
+        "true-negative": 5228,
+        "false-positive": 64,
+        "false-negative": 92,
+        "true-positive": 43
+    },
+    "confusion": {
+        "true-negative": 5204,
+        "false-positive": 70,
+        "false-negative": 88,
+        "true-positive": 65
+    },
+    "curiosity": {
+        "true-negative": 4975,
+        "false-positive": 168,
+        "false-negative": 122,
+        "true-positive": 162
+    },
+    "desire": {
+        "true-negative": 5318,
+        "false-positive": 26,
+        "false-negative": 48,
+        "true-positive": 35
+    },
+    "disappointment": {
+        "true-negative": 5076,
+        "false-positive": 200,
+        "false-negative": 91,
+        "true-positive": 60
+    },
+    "disapproval": {
+        "true-negative": 4865,
+        "false-positive": 295,
+        "false-negative": 116,
+        "true-positive": 151
+    },
+    "disgust": {
+        "true-negative": 5271,
+        "false-positive": 33,
+        "false-negative": 74,
+        "true-positive": 49
+    },
+    "embarrassment": {
+        "true-negative": 5387,
+        "false-positive": 3,
+        "false-negative": 24,
+        "true-positive": 13
+    },
+    "excitement": {
+        "true-negative": 5209,
+        "false-positive": 115,
+        "false-negative": 49,
+        "true-positive": 54
+    },
+    "fear": {
+        "true-negative": 5306,
+        "false-positive": 43,
+        "false-negative": 22,
+        "true-positive": 56
+    },
+    "gratitude": {
+        "true-negative": 5059,
+        "false-positive": 16,
+        "false-negative": 37,
+        "true-positive": 315
+    },
+    "grief": {
+        "true-negative": 5421,
+        "false-positive": 0,
+        "false-negative": 5,
+        "true-positive": 1
+    },
+    "joy": {
+        "true-negative": 5195,
+        "false-positive": 71,
+        "false-negative": 64,
+        "true-positive": 97
+    },
+    "love": {
+        "true-negative": 5121,
+        "false-positive": 68,
+        "false-negative": 33,
+        "true-positive": 205
+    },
+    "nervousness": {
+        "true-negative": 5397,
+        "false-positive": 7,
+        "false-negative": 17,
+        "true-positive": 6
+    },
+    "optimism": {
+        "true-negative": 5176,
+        "false-positive": 65,
+        "false-negative": 87,
+        "true-positive": 99
+    },
+    "pride": {
+        "true-negative": 5409,
+        "false-positive": 2,
+        "false-negative": 10,
+        "true-positive": 6
+    },
+    "realization": {
+        "true-negative": 5251,
+        "false-positive": 31,
+        "false-negative": 121,
+        "true-positive": 24
+    },
+    "relief": {
+        "true-negative": 5399,
+        "false-positive": 17,
+        "false-negative": 6,
+        "true-positive": 5
+    },
+    "remorse": {
+        "true-negative": 5330,
+        "false-positive": 41,
+        "false-negative": 8,
+        "true-positive": 48
+    },
+    "sadness": {
+        "true-negative": 5188,
+        "false-positive": 83,
+        "false-negative": 65,
+        "true-positive": 91
+    },
+    "surprise": {
+        "true-negative": 5235,
+        "false-positive": 51,
+        "false-negative": 80,
+        "true-positive": 61
+    },
+    "neutral": {
+        "true-negative": 2734,
+        "false-positive": 906,
+        "false-negative": 386,
+        "true-positive": 1401
+    }
+}
