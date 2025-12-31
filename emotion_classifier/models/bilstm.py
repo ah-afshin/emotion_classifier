@@ -4,8 +4,15 @@ from torch import nn
 
 
 class EmotionClassifierBiLSTM(nn.Module):
-    def __init__(self, vocab_size, hidden_size=256, num_layers=3, dropout=0.25):
+    def __init__(self,
+                vocab_size,
+                variant,
+                hidden_size=256,
+                num_layers=3,
+                dropout=0.25
+        ) -> None:
         super().__init__()
+        self.variant = variant
         self.embedding = nn.Embedding(vocab_size, embedding_dim=128)
         self.lstm = nn.LSTM(
             input_size=128,             # same as embedding_dim
@@ -28,7 +35,7 @@ class EmotionClassifierBiLSTM(nn.Module):
         out, _ = self.lstm(embed)           # all outputs for all time steps (all inputs of a sequence)
                                             # shape: [B, seq_len, hidden_size*2]
 
-        match method:
+        match self.variant:
             case 'max-pool':
                 # In this method we choose the largest output instead of last one. 
                 # Before pooling, set the outputs of padding tokens to a very small number

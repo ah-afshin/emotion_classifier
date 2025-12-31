@@ -21,8 +21,6 @@ training:
   finetune_lr: 0.0001
   patience: 3
 output_dir: outputs/
-device: cuda
-path: outputs/bilstm-last-token/
 
 2025-11-29 13:08:17,098 - INFO - training started.
 2025-11-29 13:12:31,297 - INFO - 

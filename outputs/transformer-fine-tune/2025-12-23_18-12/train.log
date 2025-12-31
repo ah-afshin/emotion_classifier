@@ -20,8 +20,6 @@ training:
   finetune_lr: 0.0001
   patience: 3
 output_dir: outputs/
-device: cuda
-path: outputs/transformer-fine-tune/
 
 2025-12-23 18:12:30,370 - INFO - training started.
 2025-12-23 18:18:33,097 - INFO - 

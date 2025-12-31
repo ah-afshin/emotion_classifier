@@ -1,14 +1,15 @@
 import os
+
 from datasets import load_dataset
 from transformers import AutoTokenizer
 from torch.utils.data import Dataset, DataLoader
 import torch as t
 from torch.nn.utils.rnn import pad_sequence
 
+from emotion_classifier.utils import label2id
 
-from utils.text import label2id
 
-CACHE_DIR = "./data/processed"
+CACHE_DIR = "./emotion_classifier/data/processed"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 
@@ -67,17 +68,13 @@ def preprocess_and_save(split, tokenizer, max_length=128):
 class GoEmotionsDataset(Dataset):
     def __init__(self, data):
         self.data = data
-        # self.input_ids = data["input_ids"]
-        # self.attention_mask = data["attention_mask"]
-        # self.labels = data["labels"]
-
+        
     def __len__(self):
         return len(self.data)
-        # return len(self.input_ids)
-
+        
     def __getitem__(self, idx):
-        # return self.input_ids[idx], self.labels[idx]
         return self.data[idx]
+
 
 class PadCollator:
     """This class, acts as a function that  will handle dynamic padding for each batch"""
@@ -101,27 +98,6 @@ class PadCollator:
             "attention_mask": attention_masks_padded,
             "labels": labels_stacked
         }
-
-# def create_collate_fn(pad_token_id):
-    
-#     def collate_fn(batch):
-#         input_ids = [item['input_ids'] for item in batch]
-#         attention_masks = [item['attention_mask'] for item in batch]
-#         labels = [item['labels'] for item in batch]
-
-#         # Pad sequences to the max length in this batch
-#         input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=pad_token_id)
-#         attention_masks_padded = pad_sequence(attention_masks, batch_first=True, padding_value=0)
-        
-#         # Stack labels
-#         labels_stacked = t.stack(labels)
-
-#         return {
-#             "input_ids": input_ids_padded,
-#             "attention_mask": attention_masks_padded,
-#             "labels": labels_stacked
-#         }
-#     return collate_fn
 
 
 def get_dataloaders(tokenizer_name="bert-base-uncased", batch_size=32, max_length=128):
