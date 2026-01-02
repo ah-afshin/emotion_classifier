@@ -5,7 +5,7 @@ from emotion_classifier.utils import EMOTIONS
 
 
 
-def get_pred_probs(model, dl, device, method=None):
+def get_pred_probs(model, dl, device):
     probs, labels = [], []
     with t.no_grad():
         for batch in dl:
@@ -13,10 +13,7 @@ def get_pred_probs(model, dl, device, method=None):
             mask = batch["attention_mask"].to(device)
             y = batch["labels"].to(device)
 
-            if method:
-                logit = model(x, mask, method)
-            else:
-                logit = model(x, mask)
+            logit = model(x, mask)
             prob = t.sigmoid(logit)
 
             probs.append(prob)

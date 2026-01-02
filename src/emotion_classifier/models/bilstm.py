@@ -22,12 +22,11 @@ class EmotionClassifierBiLSTM(nn.Module):
             dropout=dropout,
             batch_first=True            # this way it's compatible with dataloaders
         )
-        self.fc = nn.Linear(256*2, 28)  # hidden_size*2 -> output_size (=emotion_num)
+        self.fc = nn.Linear(hidden_size*2, 28)  # hidden_size*2 (it's bi-directional-lstm) -> output_size (=emotion_num)
     
     def forward(self,
                 input_ids: t.Tensor,
-                attention_mask: t.Tensor,
-                method: Literal['max-pool', 'last-token']
+                attention_mask: t.Tensor
         ) -> t.Tensor:
                                             # shape: [B, seq_len]
         embed = self.embedding(input_ids)   # embedding vectors, shape: [B, seq_len, hidden*2]
@@ -60,6 +59,6 @@ class EmotionClassifierBiLSTM(nn.Module):
                 return self.fc(last_outputs)
             
             case _:
-                raise ValueError(f'undefined method {method}')
+                raise ValueError(f'undefined method {self.variant}')
         # last_token = out[:, -1, :]          # :→all_Batch , -1→last_in_seq , :→all_hidden_dims
         # return self.fc(last_token)          # we only use the final output to classify the sentence

@@ -11,7 +11,7 @@ from .trainer import train_bilstm, train_transformer
 
 
 
-def run_training(config):
+def run_training(config, config_path, output_dir):
     LR = config['training']['lr']
     epochs = config['training']['epochs']
     patience = config['training']['patience']
@@ -20,16 +20,16 @@ def run_training(config):
     variant = config['model']['variant']
     # optimizer = config['training']['optimizer']
 
-    path = config['output_dir'] + f"{config['model']['name']}-{config['model']['variant']}/{datetime.now().strftime("%Y-%m-%d_%H-%M")}/"
+    path =  output_dir / f"{config['model']['name']}-{config['model']['variant']}" / datetime.now().strftime('%Y-%m-%d_%H-%M')
     device = setup_device(config)
 
     def save_model(state_dict):
-        t.save(state_dict, path+'best_model.pt')
+        t.save(state_dict, path/'best_model.pt')
     
     setup_path(path)
-    save_config('config.yaml', path)
+    save_config(config_path, path)
     set_seed(config, device)
-    logger = setup_logger(path+'train.log')
+    logger = setup_logger(path/'train.log')
     logger.info("Configuration:\n" + yaml.dump(config, sort_keys=False))
     print(f'using device: {device}')
 
@@ -41,11 +41,11 @@ def run_training(config):
     model = build_model(config)
     match config['model']['name']:
         case 'bilstm':
-            train_bilstm(model, train_dl, val_dl, epochs, LR, threshold, patience, save_model, path, logger, device)
+            train_bilstm(model, train_dl, val_dl, epochs, LR, threshold, patience, save_model, logger, device)
         case 'transformer':
             train_transformer(model, train_dl, val_dl, epochs, LR, finetune_LR, variant, threshold, patience, save_model, logger, device)
-            model.encoder.config.save_pretrained(path+'bert/')
+            model.encoder.config.save_pretrained(path/'bert/')
         case _:
             logger.error(f"ValueError: Undefined model {config['model']['name']}.")
             raise ValueError(f"Undefined model {config['model']['name']}.")
-    t.save(model.state_dict(), path+'last_epoch.pt')
+    t.save(model.state_dict(), path/'last_epoch.pt')

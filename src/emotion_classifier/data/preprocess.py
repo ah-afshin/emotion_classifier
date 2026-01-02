@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from datasets import load_dataset
 from transformers import AutoTokenizer
@@ -9,7 +10,7 @@ from torch.nn.utils.rnn import pad_sequence
 from emotion_classifier.utils import label2id
 
 
-CACHE_DIR = "./emotion_classifier/data/processed"
+CACHE_DIR = Path(__file__).parent / "processed"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 

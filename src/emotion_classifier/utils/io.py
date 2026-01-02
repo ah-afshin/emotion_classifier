@@ -1,7 +1,9 @@
 import csv
 
 
-def save_perclass_csv(perclass_metrics, fieldnames, path):
+def save_csv(perclass_metrics, fieldnames, path, filename):
+    path.mkdir(parents=True, exist_ok=True)
+    path = path/filename
     fieldnames = ["emotion"] + fieldnames
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

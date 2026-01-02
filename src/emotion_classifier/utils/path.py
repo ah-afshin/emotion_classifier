@@ -1,7 +1,8 @@
-import shutil, os, pathlib
+import shutil, os
 
 def save_config(config_path, output_dir):
-    path = pathlib.Path(output_dir) / "config.yaml"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / "config.yaml"
     shutil.copy(config_path, path)
 
 def setup_path(path):

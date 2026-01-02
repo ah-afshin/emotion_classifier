@@ -1,7 +1,7 @@
 import torch as t
 import numpy as np
-from utils.metrics import compute_metrics, compute_confusion_like, compute_prediction_metrics, compute_binary_metrics
-from utils.text import EMOTIONS
+from emotion_classifier.utils.metrics import compute_metrics, compute_confusion_like, compute_prediction_metrics, compute_binary_metrics
+from emotion_classifier.utils.text import EMOTIONS
 
 
 
@@ -14,7 +14,7 @@ def compute_metrics_perclass(true_labels, pred_labels):
     return metrics
     
 
-def test_predictions(model, dl, thresholds, device, method=None):
+def test_predictions(model, dl, thresholds, device):
     y_true_list = []
     y_pred_list = []
     y_prob_list = []
@@ -26,10 +26,7 @@ def test_predictions(model, dl, thresholds, device, method=None):
             mask = batch["attention_mask"].to(device)
             y = batch["labels"].to(device)
 
-            if method:
-                logit = model(x, mask, method)
-            else:
-                logit = model(x, mask)
+            logit = model(x, mask)
             
             prob = t.sigmoid(logit).cpu().numpy()
             pred = (prob >= thresholds).astype(int)

@@ -1,5 +1,5 @@
 from sklearn import metrics
-from utils.text import EMOTIONS
+from emotion_classifier.utils.text import EMOTIONS
 
 
 def compute_metrics(y_true, y_pred):

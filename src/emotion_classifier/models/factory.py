@@ -10,6 +10,7 @@ def build_model(config, trained_model=None):
     match config['model']['name']:
         case 'bilstm':
             model = EmotionClassifierBiLSTM(
+                            variant=config['model']['variant'],
                             vocab_size=get_vocab_size(),
                             hidden_size=config['model']['bilstm']['hidden_size'],
                             num_layers=config['model']['bilstm']['num_layers'],
@@ -25,6 +26,6 @@ def build_model(config, trained_model=None):
             raise ValueError('Unknown model.')
         
     if trained_model:
-        model.load_state_dict(t.load(f'./outputs/{trained_model}/best_model.pt', weights_only=True))
+        model.load_state_dict(t.load(trained_model/'best_model.pt', weights_only=True))
     
     return model
