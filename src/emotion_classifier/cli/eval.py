@@ -4,7 +4,7 @@ import numpy as np
 from emotion_classifier.evaluation import run_evaluation
 
 
-if __name__=="__main__":
+def main():
     with open(f'./outputs/{argv[1]}/config.yaml') as f:
         config = yaml.safe_load(f)
     with open(f'./outputs/{argv[1]}/thresholds.json') as f:
@@ -12,3 +12,7 @@ if __name__=="__main__":
         thresholds = np.array(thresholds['per_class'])
     
     run_evaluation(config, thresholds, argv[1])
+
+
+if __name__=="__main__":
+    main()

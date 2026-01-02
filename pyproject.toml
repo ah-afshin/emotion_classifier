@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "emotion-classifier"
+version = "0.1.0"
+description = "Multi-label emotion classification with BiLSTM and Transformers"
+readme = "README.md"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "AmirHosein Afshin" }
+]
+
+dependencies = [
+    # core
+    "numpy==1.26.4",
+    "pandas==2.3.3",
+    "scipy==1.15.3",
+    "scikit-learn==1.3.2",
+
+    # deep learning
+    "torch==2.2.2+cu118",
+    "tqdm==4.67.1",
+
+    # NLP / HF
+    "transformers==4.57.1",
+    "tokenizers==0.22.1",
+    "datasets==4.4.1",
+    "huggingface-hub==0.36.0",
+    "regex==2025.11.3",
+    "safetensors==0.7.0",
+
+    # data & serialization
+    "pyarrow==22.0.0",
+    "joblib==1.5.2",
+    "PyYAML==6.0.3",
+
+    # networking / infra (HF dependencies)
+    "requests==2.32.5",
+    "urllib3==2.5.0",
+    "certifi==2025.11.12",
+    "charset-normalizer==3.4.4",
+    "idna==3.11",
+
+    # async stack
+    "aiohttp==3.13.2",
+    "aiohappyeyeballs==2.6.1",
+    "aiosignal==1.4.0",
+    "async-timeout==5.0.1",
+    "frozenlist==1.8.0",
+    "multidict==6.7.0",
+    "propcache==0.4.1",
+    "yarl==1.22.0",
+
+    # utils
+    "filelock==3.19.1",
+    "fsspec==2025.9.0",
+    "packaging==25.0",
+    "python-dateutil==2.9.0.post0",
+    "pytz==2025.2",
+    "tzdata==2025.2",
+    "six==1.17.0",
+    "typing_extensions==4.15.0",
+
+    # math / symbolic (torch deps)
+    "sympy==1.14.0",
+    "mpmath==1.3.0",
+
+    # misc
+    "networkx==3.3",
+    "attrs==25.4.0",
+    "dill==0.4.0",
+    "multiprocess==0.70.18",
+    "threadpoolctl==3.6.0",
+    "xxhash==3.6.0",
+
+    # httpx stack
+    "httpx==0.28.1",
+    "httpcore==1.0.9",
+    "h11==0.16.0",
+    "sniffio==1.3.1",
+    "anyio==4.11.0",
+    "exceptiongroup==1.3.0",
+
+    # templating (transformers)
+    "Jinja2==3.1.6",
+    "MarkupSafe==2.1.5",
+]
+
+# [project.optional-dependencies]
+# dev = [
+    # "pytest",
+    # "black",
+    # "ruff",
+# ]
+
+
+[project.scripts]
+emotion-train = "emotion_classifier.cli.train:main"
+emotion-eval = "emotion_classifier.cli.eval:main"
+emotion-predict = "emotion_classifier.cli.predict:main"
+emotion-tune-thresholds = "emotion_classifier.cli.tune_threshold:main"
