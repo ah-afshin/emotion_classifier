@@ -3,6 +3,7 @@ import torch as t
 import numpy as np
 from torch import nn
 from tqdm import tqdm
+from transformers import get_linear_schedule_with_warmup
 
 from emotion_classifier.utils import compute_metrics
 
@@ -119,13 +120,27 @@ def train_transformer(
     if mode=='feature-extract':
         optim = t.optim.Adam(model.head.parameters(), lr=LR)
         criterion = nn.BCEWithLogitsLoss()
+        
+        # it's only useful for fine-tuning actually.
+        scheduler = None
+    
     elif mode=='fine-tune':
-        optimizer_grouped_parameters = [
+        model.freeze_encoder()      # for fisrt 2 epochs
+        optim = t.optim.AdamW([     # AdamW works better with transformers
             {"params": model.encoder.parameters(), "lr": finetune_LR},
             {"params": model.head.parameters(), "lr": LR}
-        ]
-        optim = t.optim.AdamW(optimizer_grouped_parameters)     # AdamW works better with transformers
+        ])
         criterion = nn.BCEWithLogitsLoss()
+
+        # using a warmup for gradual increase of LR
+        num_training_steps = epochs * len(train_dl)
+        num_warmup_steps = int(0.1 * num_training_steps)    # 10% of training steps are warmup 
+        scheduler = get_linear_schedule_with_warmup(
+            optim,
+            num_warmup_steps=num_warmup_steps,
+            num_training_steps=num_training_steps
+        )
+    
     else:
         logger.error(f'ValueError: undefined mode: {mode}')
         raise ValueError(f'undefined mode: {mode}')
@@ -134,6 +149,11 @@ def train_transformer(
         model.train()
         total_epoch_loss = 0
         progress_bar = tqdm(train_dl, desc=f"Epoch {epoch+1}/{epochs}", leave=True)
+
+        # unfreeze it at epoch 3
+        # this policy is called "progressive unfreezing", I think :)
+        if mode=='fine-tune' and epoch==2:
+            model.unfreeze_encoder()
 
         for batch in progress_bar:
             x = batch["input_ids"].to(device)
@@ -145,6 +165,8 @@ def train_transformer(
             optim.zero_grad()
             loss.backward()
             optim.step()
+            if scheduler:
+                scheduler.step()
 
             total_epoch_loss += loss.item()
             progress_bar.set_postfix(loss=loss.item())

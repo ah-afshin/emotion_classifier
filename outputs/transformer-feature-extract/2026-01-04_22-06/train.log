@@ -1,0 +1,209 @@
+2026-01-04 22:06:12,095 - INFO - Configuration:
+general:
+  seed: 418
+  device: auto
+  threshold: 0.3
+model:
+  name: transformer
+  variant: feature-extract
+  transformer:
+    dropout: 0.1
+    transformer_model: distilbert-base-uncased
+data:
+  batch_size: 32
+  preprocessing:
+    max_length: 128
+    tokenizer: bert-base-uncased
+training:
+  epochs: 15
+  lr: 0.0005
+  patience: 3
+
+2026-01-04 22:13:38,253 - INFO - 
+epoch 1 | train_loss: 0.1448 | validation_loss: 0.1247
+2026-01-04 22:13:38,253 - INFO - Metrics:
+accuracy: 0.27884260965720603
+precision-micro: 0.485512920908379
+recall-micro: 0.29153605015673983
+f1-micro: 0.3643129957888551
+f1-macro: 0.0762531670676075
+f1-samples: 0.3187316799185579
+hamming-loss: 0.04272418514032963
+val-loss: 0.12472018275190802
+
+2026-01-04 22:17:55,428 - INFO - 
+epoch 2 | train_loss: 0.1224 | validation_loss: 0.1170
+2026-01-04 22:17:55,428 - INFO - Metrics:
+accuracy: 0.2852930335422042
+precision-micro: 0.5219084712755598
+recall-micro: 0.3360501567398119
+f1-micro: 0.40884820747520983
+f1-macro: 0.1342084015654626
+f1-samples: 0.3511145630386323
+hamming-loss: 0.04080880417039651
+val-loss: 0.11703090474886053
+
+2026-01-04 22:22:16,683 - INFO - 
+epoch 3 | train_loss: 0.1176 | validation_loss: 0.1136
+2026-01-04 22:22:16,683 - INFO - Metrics:
+accuracy: 0.28897899004791744
+precision-micro: 0.5333651096282174
+recall-micro: 0.35078369905956114
+f1-micro: 0.4232223903177005
+f1-macro: 0.1596803648299887
+f1-samples: 0.3629324416829024
+hamming-loss: 0.04015059765151914
+val-loss: 0.11362836106735118
+
+2026-01-04 22:27:13,656 - INFO - 
+epoch 4 | train_loss: 0.1150 | validation_loss: 0.1116
+2026-01-04 22:27:13,656 - INFO - Metrics:
+accuracy: 0.30040545521562845
+precision-micro: 0.5338465021507811
+recall-micro: 0.3695924764890282
+f1-micro: 0.4367879966657405
+f1-macro: 0.18368370761314523
+f1-samples: 0.3797035437838976
+hamming-loss: 0.040025538412932445
+val-loss: 0.11162698562530911
+
+2026-01-04 22:35:10,424 - INFO - 
+epoch 5 | train_loss: 0.1134 | validation_loss: 0.1104
+2026-01-04 22:35:10,424 - INFO - Metrics:
+accuracy: 0.3079616660523406
+precision-micro: 0.5364853195164075
+recall-micro: 0.3894984326018809
+f1-micro: 0.45132582637123136
+f1-macro: 0.19946043080318687
+f1-samples: 0.3960884980604848
+hamming-loss: 0.03976883787057027
+val-loss: 0.11041439776034916
+
+2026-01-04 22:39:03,513 - INFO - 
+epoch 6 | train_loss: 0.1121 | validation_loss: 0.1092
+2026-01-04 22:39:03,513 - INFO - Metrics:
+accuracy: 0.30759307040176925
+precision-micro: 0.5429884051629841
+recall-micro: 0.3890282131661442
+f1-micro: 0.4532919368094238
+f1-macro: 0.2111664380221065
+f1-samples: 0.3946009513278219
+hamming-loss: 0.03940682428518772
+val-loss: 0.10921655025552301
+
+2026-01-04 22:42:55,443 - INFO - 
+epoch 7 | train_loss: 0.1113 | validation_loss: 0.1081
+2026-01-04 22:42:55,443 - INFO - Metrics:
+accuracy: 0.30243273129377074
+precision-micro: 0.5523978685612788
+recall-micro: 0.38996865203761755
+f1-micro: 0.4571848585079015
+f1-macro: 0.22407673872762407
+f1-samples: 0.3925806961192143
+hamming-loss: 0.0388868411352746
+val-loss: 0.10810474876095266
+
+2026-01-04 22:47:12,904 - INFO - 
+epoch 8 | train_loss: 0.1106 | validation_loss: 0.1079
+2026-01-04 22:47:12,904 - INFO - Metrics:
+accuracy: 0.30501290084777
+precision-micro: 0.5591105060131609
+recall-micro: 0.38620689655172413
+f1-micro: 0.45684620376378976
+f1-macro: 0.22047102732690968
+f1-samples: 0.392442911554596
+hamming-loss: 0.038564319941024695
+val-loss: 0.10786088687532089
+
+2026-01-04 22:47:12,904 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2026-01-04 22:51:00,666 - INFO - 
+epoch 9 | train_loss: 0.1099 | validation_loss: 0.1071
+2026-01-04 22:51:00,666 - INFO - Metrics:
+accuracy: 0.316439366015481
+precision-micro: 0.5439111297421925
+recall-micro: 0.4067398119122257
+f1-micro: 0.46542910949690613
+f1-macro: 0.2269461338701759
+f1-samples: 0.4110657679953662
+hamming-loss: 0.03923569059027961
+val-loss: 0.10710856454337345
+
+2026-01-04 22:54:49,336 - INFO - 
+epoch 10 | train_loss: 0.1096 | validation_loss: 0.1067
+2026-01-04 22:54:49,336 - INFO - Metrics:
+accuracy: 0.3228897899004792
+precision-micro: 0.544821940237413
+recall-micro: 0.41724137931034483
+f1-micro: 0.4725723415586721
+f1-macro: 0.23325135525548474
+f1-samples: 0.42009636143436363
+hamming-loss: 0.039110631351692904
+val-loss: 0.10674674300586476
+
+2026-01-04 22:58:38,837 - INFO - 
+epoch 11 | train_loss: 0.1091 | validation_loss: 0.1063
+2026-01-04 22:58:38,837 - INFO - Metrics:
+accuracy: 0.3227054920751935
+precision-micro: 0.547436163587295
+recall-micro: 0.4133228840125392
+f1-micro: 0.4710190229525765
+f1-macro: 0.23374495489985084
+f1-samples: 0.41827707861618657
+hamming-loss: 0.03898557211310621
+val-loss: 0.10625093886080911
+
+2026-01-04 22:58:38,837 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2026-01-04 23:02:28,091 - INFO - 
+epoch 12 | train_loss: 0.1086 | validation_loss: 0.1059
+2026-01-04 23:02:28,091 - INFO - Metrics:
+accuracy: 0.31717655731662364
+precision-micro: 0.566880389122264
+recall-micro: 0.40188087774294673
+f1-micro: 0.4703292671741723
+f1-macro: 0.2486583108810716
+f1-samples: 0.40674617801414703
+hamming-loss: 0.03801142646516771
+val-loss: 0.10593668069033062
+
+2026-01-04 23:02:28,091 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2026-01-04 23:06:50,597 - INFO - 
+epoch 13 | train_loss: 0.1085 | validation_loss: 0.1058
+2026-01-04 23:06:50,597 - INFO - Metrics:
+accuracy: 0.3286030224843347
+precision-micro: 0.5369021846093289
+recall-micro: 0.42758620689655175
+f1-micro: 0.4760492103655877
+f1-macro: 0.24969341366796974
+f1-samples: 0.4301888613904832
+hamming-loss: 0.03952530145858565
+val-loss: 0.10580764627631972
+
+2026-01-04 23:14:27,820 - INFO - 
+epoch 14 | train_loss: 0.1084 | validation_loss: 0.1054
+2026-01-04 23:14:27,820 - INFO - Metrics:
+accuracy: 0.31496498341319573
+precision-micro: 0.5590465872156013
+recall-micro: 0.4043887147335423
+f1-micro: 0.4693042291950887
+f1-macro: 0.25480362687592994
+f1-samples: 0.40725080301195304
+hamming-loss: 0.038406350376494126
+val-loss: 0.10540361215963083
+
+2026-01-04 23:14:27,820 - WARNING - Metrics on Validation dataset did not improved during this epoch of training.
+
+2026-01-04 23:21:19,039 - INFO - 
+epoch 15 | train_loss: 0.1078 | validation_loss: 0.1049
+2026-01-04 23:21:19,039 - INFO - Metrics:
+accuracy: 0.32399557685219316
+precision-micro: 0.5512925728354534
+recall-micro: 0.42115987460815046
+f1-micro: 0.47751910431846456
+f1-macro: 0.2576485172545649
+f1-samples: 0.42345584750671367
+hamming-loss: 0.03870254330998894
+val-loss: 0.10488651833113502
+
