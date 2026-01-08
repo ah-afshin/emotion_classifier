@@ -1,11 +1,12 @@
 import json
 
-from emotion_classifier.utils import setup_device, save_csv
+from emotion_classifier.utils import setup_device, save_csv, EMOTIONS
 from emotion_classifier.data import get_dataloaders
 from emotion_classifier.models import build_model
 from emotion_classifier.inference import get_pred_probs
 from .evaluator import test_predictions
 from .threshold_tuner import find_global_threshold, find_perclass_threshold
+from .dataset_analysis import find_label_cooccurance, count_labels
 
 
 
@@ -60,3 +61,31 @@ def run_thresholding(config, path):
         json.dump(thresholds, f, indent=4)
     
     return thresholds['global'], f1
+
+
+def run_dataset_analysis(split, path):
+    (path/split).mkdir(parents=True, exist_ok=True)
+    dls={}
+    dls['train'], dls['eval'], dls['test'] = get_dataloaders()
+    dl = dls[split]
+
+    cooccurance = find_label_cooccurance(dl)
+    save_csv(
+        cooccurance['raw-nums'],
+        EMOTIONS,
+        path=path/split/'cooccurance_matrix_raw.csv'
+    )
+    save_csv(
+        cooccurance['conditional'],
+        EMOTIONS,
+        path=path/split/'cooccurance_conditional_probability.csv'
+    )
+    save_csv(
+        cooccurance['jaccard'],
+        EMOTIONS,
+        path=path/split/'cooccurance_jaccard_similarity.csv'
+    )
+
+    num_labels = count_labels(dl)
+    with open(path/split/'num_label_samples.json', 'w', encoding='utf-8') as f:
+        json.dump(num_labels, f, indent=4)
