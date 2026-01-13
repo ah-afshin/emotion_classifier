@@ -14,6 +14,27 @@ def compute_metrics_perclass(true_labels, pred_labels):
     return metrics
     
 
+def compute_cooccurance(y_pred, y_true):
+    C = y_pred.T @ y_true       # (c, N) @ (N, c)
+    diag = C.diag()
+    cooccurance_matrices = {
+        'raw_nums': C.numpy(),
+        'conditional': (C / (C.diag().unsqueeze(1) + 1e-8)).numpy(),
+        'jaccard': (C / (diag.unsqueeze(1) + diag.unsqueeze(0) - C + 1e-8)).numpy()
+    }
+    return cooccurance_matrices
+
+
+def diagnose_model(y_pred, y_true):
+    y_pred = t.tensor(y_pred).float()
+    y_true = t.tensor(y_true).float()
+    y_false = (y_pred-y_true).absolute()
+
+    pred_true_cooccurance = compute_cooccurance(y_pred, y_true)
+    false_true_cooccurance = compute_cooccurance(y_false, y_true)
+    return pred_true_cooccurance, false_true_cooccurance
+
+
 def test_predictions(model, dl, thresholds, device):
     y_true_list = []
     y_pred_list = []
@@ -42,4 +63,14 @@ def test_predictions(model, dl, thresholds, device):
     perclass_metrics = compute_metrics_perclass(y_true, y_pred)
     decisioning_metrics = compute_prediction_metrics(y_true, y_prob)
     confusion_like_matrix = compute_confusion_like(y_true, y_pred)
-    return {'metrics': global_metrics, 'per-class-metrics': perclass_metrics, 'prediction-stats': decisioning_metrics}, confusion_like_matrix
+    pred_cooccure, false_cooccure = diagnose_model(y_pred, y_true)
+
+    return {
+            'metrics': global_metrics,
+            'per-class-metrics': perclass_metrics,
+            'prediction-stats': decisioning_metrics
+        },{
+            'confusion-like': confusion_like_matrix,
+            'pred-true-cooccure': pred_cooccure,
+            'false-true-cooccure': false_cooccure
+        }
