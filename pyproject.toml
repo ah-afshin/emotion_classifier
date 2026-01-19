@@ -64,6 +64,7 @@ dependencies = [
     # utils
     "filelock==3.19.1",
     "fsspec==2025.9.0",
+    "matplotlib"
     "packaging==25.0",
     "python-dateutil==2.9.0.post0",
     "pytz==2025.2",
@@ -110,3 +111,4 @@ emotion-eval = "emotion_classifier.cli.eval:main"
 emotion-predict = "emotion_classifier.cli.predict:main"
 emotion-tune-thresholds = "emotion_classifier.cli.tune_threshold:main"
 emotion-analize-dataset = "emotion_classifier.cli.dataset_analysis:main"
+emotion-visualize = "emotion_classifier.cli.visualize:main"

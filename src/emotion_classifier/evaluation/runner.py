@@ -1,12 +1,12 @@
 import json
 
-from emotion_classifier.utils import setup_device, save_perclass_metrics_csv, save_cooccurance_matrix_csv
+from emotion_classifier.utils import setup_device, save_perclass_metrics_csv, save_cooccurrence_matrix_csv
 from emotion_classifier.data import get_dataloaders
 from emotion_classifier.models import build_model
 from emotion_classifier.inference import get_pred_probs
 from .evaluator import test_predictions
 from .threshold_tuner import find_global_threshold, find_perclass_threshold
-from .dataset_analysis import find_label_cooccurance, count_labels
+from .dataset_analysis import find_label_cooccurrence, count_labels
 
 
 
@@ -41,17 +41,17 @@ def run_evaluation(config, thresholds, path):
         "per_class_confusion_matrix.csv"
     )
 
-    for key, value in csv['pred-true-cooccure']:
-        save_cooccurance_matrix_csv(
+    for key, value in csv['pred-true-cooccure'].items():
+        save_cooccurrence_matrix_csv(
             value,
             path/"eval",
-            f"pred_true_cooccurance_matrix_{key}.csv"
+            f"pred_true_cooccurrence_matrix_{key}.csv"
         )
-    for key, value in csv['false-true-cooccure']:
-        save_cooccurance_matrix_csv(
+    for key, value in csv['false-true-cooccure'].items():
+        save_cooccurrence_matrix_csv(
             value,
             path/"eval",
-            f"false_true_cooccurance_matrix_{key}.csv"
+            f"false_true_cooccurrence_matrix_{key}.csv"
         )
 
 
@@ -84,21 +84,21 @@ def run_dataset_analysis(split, path, device):
     dl = dls[split]
     device = setup_device({'general':{'device': device}})
     
-    cooccurance = find_label_cooccurance(dl, 28, device)
-    save_cooccurance_matrix_csv(
-        cooccurance['raw-nums'],
+    cooccurrence = find_label_cooccurrence(dl, 28, device)
+    save_cooccurrence_matrix_csv(
+        cooccurrence['raw-nums'],
         path=path/split,
-        filename='cooccurance_matrix_raw.csv'
+        filename='cooccurrence_matrix_raw.csv'
     )
-    save_cooccurance_matrix_csv(
-        cooccurance['conditional'],
+    save_cooccurrence_matrix_csv(
+        cooccurrence['conditional'],
         path=path/split,
-        filename='cooccurance_conditional_probability.csv'
+        filename='cooccurrence_conditional_probability.csv'
     )
-    save_cooccurance_matrix_csv(
-        cooccurance['jaccard'],
+    save_cooccurrence_matrix_csv(
+        cooccurrence['jaccard'],
         path=path/split,
-        filename='cooccurance_jaccard_similarity.csv'
+        filename='cooccurrence_jaccard_similarity.csv'
     )
 
     num_labels = count_labels(dl, 28, device)

@@ -14,15 +14,15 @@ def compute_metrics_perclass(true_labels, pred_labels):
     return metrics
     
 
-def compute_cooccurance(y_pred, y_true):
+def compute_cooccurrence(y_pred, y_true):
     C = y_pred.T @ y_true       # (c, N) @ (N, c)
     diag = C.diag()
-    cooccurance_matrices = {
+    cooccurrence_matrices = {
         'raw_nums': C.numpy(),
         'conditional': (C / (C.diag().unsqueeze(1) + 1e-8)).numpy(),
         'jaccard': (C / (diag.unsqueeze(1) + diag.unsqueeze(0) - C + 1e-8)).numpy()
     }
-    return cooccurance_matrices
+    return cooccurrence_matrices
 
 
 def diagnose_model(y_pred, y_true):
@@ -30,9 +30,9 @@ def diagnose_model(y_pred, y_true):
     y_true = t.tensor(y_true).float()
     y_false = (y_pred-y_true).absolute()
 
-    pred_true_cooccurance = compute_cooccurance(y_pred, y_true)
-    false_true_cooccurance = compute_cooccurance(y_false, y_true)
-    return pred_true_cooccurance, false_true_cooccurance
+    pred_true_cooccurrence = compute_cooccurrence(y_pred, y_true)
+    false_true_cooccurrence = compute_cooccurrence(y_false, y_true)
+    return pred_true_cooccurrence, false_true_cooccurrence
 
 
 def test_predictions(model, dl, thresholds, device):

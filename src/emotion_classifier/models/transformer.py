@@ -19,14 +19,10 @@ class EmotionClassifierTransformer(nn.Module):
                 # Feature Extraction means we only train a head to work with embedding vecs
                 # So we need to freeze our transformer model.
                 self.freeze_encoder()
-        #         for param in self.encoder.parameters():
-        #             param.requires_grad = False
             case 'fine-tune':
                 self.unfreeze_encoder()
-        #         # Fine Tuning is when we train the encoder transformer too (usually with a lower LR)
-        #         # It's more accurate, But also slower. We enable gradients here.
-        #         for param in self.encoder.parameters():
-        #             param.requires_grad = True
+                # Fine Tuning is when we train the encoder transformer too (usually with a lower LR)
+                # It's more accurate, But also slower. We enable gradients here.
             case None:
                 pass
             case _:
@@ -56,4 +52,3 @@ class EmotionClassifierTransformer(nn.Module):
         embedding_vec = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
         pooled = embedding_vec.last_hidden_state[:, 0, :]   # CLS token representation
         return self.head(pooled)                            # this is the final classification result.
-    

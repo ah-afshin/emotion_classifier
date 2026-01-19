@@ -16,7 +16,7 @@ def save_perclass_metrics_csv(perclass_metrics, fieldnames, path, filename):
             writer.writerow(row)
 
 
-def save_cooccurance_matrix_csv(matrix, path, filename):
+def save_cooccurrence_matrix_csv(matrix, path, filename):
     path.mkdir(parents=True, exist_ok=True)
     assert len(matrix) == len(EMOTIONS)
 
