@@ -1,89 +1,85 @@
 # this code is AI generated
-import csv, re
+import csv
+import re
+from pathlib import Path
 
 
 
-def parse_confusion_matrix(csv_file):
+def parse_confusion_matrix(csv_file: Path):
     """
-    Parse a CSV file containing confusion matrix data.
-
-    Parameters:
-        - csv_file: Path to the CSV file.
-
-    Returns:
-        - A list of dictionaries with keys: 'emotion', 'true-negative', 'false-positive', 'false-negative', 'true-positive'.
+    Expected CSV columns:
+    emotion, tn, fp, fn, tp
     """
     data = []
-    with open(csv_file, 'r', newline='', encoding='utf-8') as f:
+    with open(csv_file, encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             data.append({
-                'emotion': row['emotion'],
-                'true-negative': float(row['true-negative']),
-                'false-positive': float(row['false-positive']),
-                'false-negative': float(row['false-negative']),
-                'true-positive': float(row['true-positive']),
+                "emotion": row["emotion"],
+                "tn": float(row["true-negative"]),
+                "fp": float(row["false-positive"]),
+                "fn": float(row["false-negative"]),
+                "tp": float(row["true-positive"]),
             })
     return data
 
 
-def read_similarity_matrix(file_path):
-    """Read a CSV file and return a 2D list of similarity values and emotion names."""
-    with open(file_path, 'r', newline='', encoding='utf-8') as f:
-        reader = csv.reader(f)
-        data = [row for row in reader]
+def read_similarity_matrix(csv_file: Path):
+    """
+    CSV format:
+        ,label1,label2,...
+        label1,0.0,0.2,...
+        label2,0.2,0.0,...
+    """
+    with open(csv_file, encoding="utf-8") as f:
+        reader = list(csv.reader(f))
 
-    # Extract column headers (first row)
-    column_headers = data[0]
+    headers = reader[0][1:]
+    rows = [r[0] for r in reader[1:]]
+    matrix = [[float(v) for v in r[1:]] for r in reader[1:]]
 
-    # Extract row headers (first column of each row after the first)
-    row_headers = [row[0] for row in data[1:]]
+    if headers != rows:
+        raise ValueError(f"Row/column labels mismatch in {csv_file}")
 
-    # Extract the similarity matrix (27x27)
-    matrix = []
-    for row in data[1:]:
-        matrix_row = [float(val) for val in row[1:]]
-        matrix.append(matrix_row)
-
-    return row_headers, column_headers, matrix
+    return headers, matrix
 
 
-def parse_log(log_lines):
-    data = []
+def parse_log(lines):
+    epoch_re = re.compile(
+        r"epoch\s+(\d+)\s+\|\s+train_loss:\s*([\d.]+)\s+\|\s+validation_loss:\s*([\d.]+)"
+    )
+    metric_re = re.compile(r"([\w\-]+)\s*:\s*([-+]?\d*\.?\d+)")
+
+    results = []
     i = 0
-    while i < len(log_lines):
-        line = log_lines[i].strip()
-        if line.startswith('epoch'):
-            # Parse epoch, train_loss, validation_loss
-            parts = line.split('|')
-            epoch_part = parts[0].split(' ')[1]
-            epoch = int(epoch_part)
-            train_loss = float(parts[1].split(':')[1].strip())
-            val_loss = float(parts[2].split(':')[1].strip())
 
-            # Find the metrics line
+    while i < len(lines):
+        m = epoch_re.search(lines[i])
+        if not m:
             i += 1
-            while i < len(log_lines):
-                metrics_line = log_lines[i].strip()
-                if metrics_line.startswith('Metrics:'):
-                    # Parse metrics
-                    metrics = {}
-                    metrics_str = metrics_line[len('Metrics: '):]
-                    metrics_items = re.findall(r'(\w+(-\w+)*)\s*:\s*([-+]?\d*\.?\d+)', metrics_str)
-                    for key, _, value in metrics_items:
-                        metrics[key] = float(value)
+            continue
 
-                    # Append to data
-                    data.append({
-                        'epoch': epoch,
-                        'train_loss': train_loss,
-                        'val_loss': val_loss,
-                        **metrics
-                    })
-                    i += 1
-                    break
-                else:
-                    i += 1
-        else:
+        entry = {
+            "epoch": int(m.group(1)),
+            "train_loss": float(m.group(2)),
+            "val_loss": float(m.group(3)),
+        }
+
+        i += 1
+        while i < len(lines) and "Metrics:" not in lines[i]:
             i += 1
-    return data
+
+        i += 1
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line or "epoch" in line:
+                break
+
+            m = metric_re.match(line)
+            if m:
+                entry[m.group(1)] = float(m.group(2))
+            i += 1
+
+        results.append(entry)
+
+    return results

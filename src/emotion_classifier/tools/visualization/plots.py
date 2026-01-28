@@ -1,155 +1,151 @@
 # this code is AI generated
 import json
+from pathlib import Path
+import math
+import numpy as np
 import matplotlib.pyplot as plt
 
-
-def plot_losses(data):
-    epochs = [d['epoch'] for d in data]
-    train_losses = [d['train_loss'] for d in data]
-    val_losses = [d['val_loss'] for d in data]
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(epochs, train_losses, label='Train Loss', marker='o')
-    plt.plot(epochs, val_losses, label='Validation Loss', marker='s')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training and Validation Loss over Epochs')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+from .helpers import _save
 
 
-def plot_f1(data, metric='f1-macro'):
-    epochs = [d['epoch'] for d in data]
-    f1_scores = [d[metric] for d in data]
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(epochs, f1_scores, label=f'{metric} F1 Score', marker='^')
-    plt.xlabel('Epoch')
-    plt.ylabel('F1 Score')
-    plt.title(f'{metric} F1 Score over Epochs')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+def plot_losses(data, out_dir: Path):
+    data = sorted(data, key=lambda d: d["epoch"])
 
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot([d["epoch"] for d in data], [d["train_loss"] for d in data], label="Train")
+    ax.plot([d["epoch"] for d in data], [d["val_loss"] for d in data], label="Validation")
 
-def plot_heatmaps(
-    label1, row_headers1, column_headers1, matrix1,
-    label2 ,row_headers2, column_headers2, matrix2
-):
-    """
-    Plots two heatmaps side by side in one figure.
-    
-    Parameters:
-    - row_headers1, column_headers1, matrix1: Data for the left heatmap.
-    - row_headers2, column_headers2, matrix2: Data for the right heatmap.
-    """
-    # Create a figure with two subplots side by side
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))  # Adjust figure size as needed
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
+    ax.set_title("Training / Validation Loss")
+    ax.legend()
+    ax.grid(True)
 
-    # Plot the first heatmap (left)
-    im1 = ax1.imshow(matrix1, cmap='viridis', aspect='auto', origin='lower')
-    cbar1 = fig.colorbar(im1, ax=ax1)
-    cbar1.set_label(label1)  # Or adjust as needed
-
-    # Set x and y labels for the first heatmap
-    ax1.set_xticks(range(len(column_headers1)))
-    ax1.set_xticklabels(column_headers1, rotation=90)
-    ax1.set_yticks(range(len(row_headers1)))
-    ax1.set_yticklabels(row_headers1)
-    ax1.set_title(label1)
-
-    # Plot the second heatmap (right)
-    im2 = ax2.imshow(matrix2, cmap='viridis', aspect='auto', origin='lower')
-    cbar2 = fig.colorbar(im2, ax=ax2)
-    cbar2.set_label(label2)  # Or adjust as needed
-
-    # Set x and y labels for the second heatmap
-    ax2.set_xticks(range(len(column_headers2)))
-    ax2.set_xticklabels(column_headers2, rotation=90)
-    ax2.set_yticks(range(len(row_headers2)))
-    ax2.set_yticklabels(row_headers2)
-    ax2.set_title(label2)
-
-    # Improve layout
-    fig.tight_layout()
-    plt.show()
+    _save(fig, out_dir / "loss_curve.png")
 
 
-def plot_confusion_matrices(data, title="Per-class Confusion Matrices", figsize=(20, 20)):
-    """
-    Plot confusion matrices for each class in a grid of subplots.
 
-    Parameters:
-        - data: List of dictionaries with confusion matrix data.
-        - title: Title of the figure.
-        - figsize: Figure size.
-    """
-    num_classes = len(data)
-    num_rows = 7
-    num_cols = 4
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
-    fig.suptitle(title, fontsize=16)
+def plot_f1(data, metric: str, out_dir: Path):
+    data = [d for d in data if metric in d]
+    if not data:
+        print(f"[WARN] metric '{metric}' not found")
+        return
 
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot([d["epoch"] for d in data], [d[metric] for d in data])
+
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel(metric)
+    ax.set_title(f"{metric} over epochs")
+    ax.grid(True)
+
+    _save(fig, out_dir / f"{metric}.png")
+
+
+def plot_confusion_matrices(data, out_dir: Path, cols=4):
+    rows = math.ceil(len(data) / cols)
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
     axes = axes.flatten()
 
-    for i, ax in enumerate(axes):
-        if i >= num_classes:
-            ax.axis('off')  # Hide unused subplots
-            continue
+    for ax, row in zip(axes, data):
+        cm = np.array([
+            [row["tn"], row["fp"]],
+            [row["fn"], row["tp"]]
+        ], dtype=float)
 
-        # Extract confusion matrix data for this class
-        row = data[i]
-        tn = row['true-negative']
-        fp = row['false-positive']
-        fn = row['false-negative']
-        tp = row['true-positive']
+        # --- row-wise normalization (Actual-based) ---
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm_norm = np.divide(cm, row_sums, where=row_sums != 0)
 
-        # Create the confusion matrix (2x2)
-        cm = [[tn, fp], [fn, tp]]
+        im = ax.imshow(
+            cm_norm,
+            cmap="Blues",
+            vmin=0.0,
+            vmax=1.0
+        )
 
-        # Plot the confusion matrix
-        im = ax.imshow(cm, cmap='viridis', aspect='auto')
-        ax.set_title(row['emotion'])
+        ax.set_title(row["emotion"], fontsize=10)
 
-        # Annotate the cells
-        for j in range(2):
-            for k in range(2):
-                ax.text(k, j, f"{cm[j][k]}", ha="center", va="center", color="black")
+        # --- annotations ---
+        for y in range(2):
+            for x in range(2):
+                value = int(cm[y, x])
+                pct = cm_norm[y, x] * 100 if row_sums[y, 0] > 0 else 0
 
-        # Set axis labels
+                color = "white" if cm_norm[y, x] > 0.5 else "black"
+
+                ax.text(
+                    x, y,
+                    f"{value}\n{pct:.1f}%",
+                    ha="center",
+                    va="center",
+                    fontsize=10,
+                    color=color
+                )
+
         ax.set_xticks([0, 1])
-        ax.set_xticklabels(['Negative', 'Positive'])
         ax.set_yticks([0, 1])
-        ax.set_yticklabels(['Negative', 'Positive'])
+        ax.set_xticklabels(["Pred -", "Pred +"])
+        ax.set_yticklabels(["Actual -", "Actual +"])
 
-        # Set axis labels
-        ax.set_xlabel('Predicted')
-        ax.set_ylabel('Actual')
+    for ax in axes[len(data):]:
+        ax.axis("off")
 
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.95)
-    plt.show()
+    # # --- shared colorbar ---
+    # cbar = fig.colorbar(im, ax=axes.tolist(), shrink=0.6)
+    # cbar.set_label("Fraction of actual class")
+
+    fig.suptitle("Per-class Confusion Matrices (Row-normalized)", fontsize=16)
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.93)
+
+    _save(fig, out_dir / "confusion_matrices.png")
 
 
-def plot_json_barchart(json_file_path, split):
-    """
-    Loads data from a JSON file and plots it as a bar chart.
+def plot_heatmaps(title1, labels1, mat1,
+                  title2, labels2, mat2,
+                  out_path: Path):
 
-    Args:
-        json_file_path (str): The path to the JSON file.
-    """
-    with open(json_file_path, 'r') as f:
+    mat1 = np.array(mat1)
+    mat2 = np.array(mat2)
+
+    vmin = min(mat1.min(), mat2.min())
+    vmax = max(mat1.max(), mat2.max())
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+
+    im1 = ax1.imshow(mat1, cmap="magma", vmin=vmin, vmax=vmax)
+    ax1.set_title(title1)
+    ax1.set_xticks(range(len(labels1)))
+    ax1.set_yticks(range(len(labels1)))
+    ax1.set_xticklabels(labels1, rotation=90)
+    ax1.set_yticklabels(labels1)
+
+    im2 = ax2.imshow(mat2, cmap="magma", vmin=vmin, vmax=vmax)
+    ax2.set_title(title2)
+    ax2.set_xticks(range(len(labels2)))
+    ax2.set_yticks(range(len(labels2)))
+    ax2.set_xticklabels(labels2, rotation=90)
+    ax2.set_yticklabels(labels2)
+
+    # fig.colorbar(im1, ax=[ax1, ax2], shrink=0.8)
+    fig.tight_layout()
+
+    _save(fig, out_path)
+
+
+def plot_json_barchart(json_file: Path, split: str, out_dir: Path):
+    with open(json_file) as f:
         data = json.load(f)
 
-    emotions = list(data.keys())
-    values = list(data.values())
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.bar(data.keys(), data.values())
 
-    plt.figure(figsize=(12, 6))  # Adjust figure size for better readability
-    plt.bar(emotions, values)
-    plt.xlabel("Emotions")
-    plt.ylabel("Values")
-    plt.title(f"Number of samples for each label ({split} dataset)")
-    plt.xticks(rotation=45, ha="right") # Rotate x-axis labels for better readability
-    plt.tight_layout() # Adjust layout to prevent labels from overlapping
-    plt.show()
+    ax.set_xlabel("Emotions")
+    ax.set_ylabel("Count")
+    ax.set_title(f"Number of samples ({split})")
+    ax.tick_params(axis="x", rotation=45)
+
+    fig.tight_layout()
+    _save(fig, out_dir / f"label_distribution_{split}.png")
