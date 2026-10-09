@@ -7,43 +7,33 @@ using PyTorch and HuggingFace Transformers.
 - [Getting Started](#getting-started)
 - [Components](#components)
 - [Results](#results)
-  - [dataset](#dataset)
-  - [bilstm last-token](#bilstm-last-token)
-  - [bilstm max-pool](#bilstm-max-pool)
-  - [transformer feature-extract](#transformer-feature-extract)
-  - [transformer fine-tune](#transformer-fine-tune)
-  - [comparison](#comparison)
-- [Issues and Further Expantion]()
+- [Issues and Future Work](#issues-and-future-work)
 - [License](#license)
 
 ---
 
 ## Getting Started
-The project is formated as a python package, Once you clone it on your machine and open the root directory,
-you can install it using pip in your virtual environment using the following command:
+The project is formatted as a Python package. After cloning the repository and opening its root directory, install it in a virtual environment with:
 ```bash
 pip install -e .
 ```
 
-Configure a model in a YAML file ([here](config.yaml) is an example of a config file)
-and train your model using this command (pass your config file and output directory as arguments).
-The trained model will be saved at a new run directory (as `best_model.pt`) next to training logs:
+Configure a model in a YAML file ([config.yaml](config.yaml) is an example), then train it with the following command. Pass your configuration file and output directory as arguments. The best checkpoint (`best_model.pt`) and training log will be saved in a new run directory:
 ```bash
 emotion-train --config <your-config-path> --output-dir <your-outputs-path>
 ```
 
-Then you need to find optimal thresholds for your model, use this command, pass the run directory as model path,
-the results (optimal thresholds) will be saved in `thresholds.json` at model's path:
+Next, find the optimal thresholds for your model. Pass the run directory as the model path; the thresholds will be saved to `thresholds.json` in that directory:
 ```bash
 emotion-tune-thresholds --model-path <your-run-path>
 ```
 
-Then you can evaluate your model as follow and the results will be saved at a sub directory `eval/` at the model's path.
+Evaluate the model with the following command. Results will be saved in an `eval/` subdirectory of the run directory:
 ```bash
 emotion-eval --model-path <your-run-path>
 ```
 
-You can also test it yourself to see how good it can predict the feelings in your sentence like this:
+You can also try a prediction on a sentence:
 ```bash
 emotion-predict --model-path <your-run-path> --text "<your sentence>"
 ```
@@ -60,99 +50,31 @@ emotion-predict --model-path <your-run-path> --text "<your sentence>"
 - `inference/` here are the functions used to predict emotions in a sentece.
 - `models/` model architectures and model factory are here.
 - `training/` here are the functions used to train the models.
-- `uitls/` side utilities and helper functions are here.
-- `tools/visualisation/` some tools to visualize the outputs. ***(WIP)***
+- `utils/` side utilities and helper functions are here.
+- `tools/visualisation/` some tools to visualize the outputs.
 
 ---
 
 ## Results
-These are the results I achived from my experiments:
+[here](report.md) is the full report on the experiments and the results.
 
-[here](report.md) is the full report.
+I used the GoEmotions dataset, an imbalanced multilabel collection of English sentences. The [report's dataset section](report.md#data-and-evaluation) includes the dataset analysis plots.
 
-### dataset
-I used GoEmotions dataset for this project, which is a multilabel dataset of sentences by Google.
-It's an imbalanced dataset with an inherited cooccurance of labels.
-[here](/outputs/dataset/note.md) is an analysis of this dataset.
+| Approach | Test run | Micro-F1 | Macro-F1 | Hamming loss | Reported training time* |
+|---|---|---:|---:|---:|---:|
+| BiLSTM, last-token | [2025-11-29](outputs/bilstm-last-token/2025-11-29_13-08/eval/test_results.json) | 48.98% | 39.01% | 0.0496 | 1:26 |
+| BiLSTM, max-pool | [2025-11-28](outputs/bilstm-max-pool/2025-11-28_23-30/eval/test_results.json) | 54.76% | 44.01% | 0.0425 | 0:46 |
+| Transformer, feature extraction | [2025-12-23](outputs/transformer-feature-extract/2025-12-23_15-50/eval/test_results.json) | 49.37% | 38.51% | 0.0489 | 1:15 |
+| Transformer, fine-tuning | [2026-01-03](outputs/transformer-fine-tune/2026-01-03_20-47/eval/test_results.json) | 59.87% | 50.40% | 0.0364 | 0:32 |
 
-### BiLSTM last-token
-Well this was the first thing and easiest thing that came to my mind, I tried it and it wasn't bad actually,
-it jsut took longer to train than i thought it would. These are the results that I got:
-f1 micro | f1 macro | precision | Recall | hamming loss
-:---:|:---:|:---:|:---:|:---:
-~48|~39|~42|~57|0.049
-
-[here](report.md#bilstm-last-token) is a full report on this model.
-
-### BiLSTM max-pool
-The next thing that came to my mind, was this (and honestly didn't think it work).
-It was better both in training time and performance. These are the results that I got:
-f1 micro | f1 macro | precision | Recall | hamming loss
-:---:|:---:|:---:|:---:|:---:
-~48|~44|~42|~57|0.042
-
-[here](report.md#bilstm-max-pool) is a full report on this model.
-
-### Transformer feature-extract
-I added a two layer fully-connected neural-network to a pretrained Encoder (distil-BERT) as a feature extractor head.
-I did a few experiments and here is the (best) results that I got:
-f1 micro | f1 macro | precision | Recall | hamming loss
-:---:|:---:|:---:|:---:|:---:
-~47|~38|~43|~53|0.048
-
-[here](report.md#transformer-feature-extract) is a full report on this model.
-
-### Transformer fine-tune
-f1 micro | f1 macro | precision | Recall | hamming loss
-:---:|:---:|:---:|:---:|:---:
-~59|~50|~55|~56|0.036
-
-Fine-tuning is well known as a way to specialize a pretrained model for a task,
-so I added a head to a bert model and fine-tuned it 
-
-[here](report.md#transformer-fine-tune) is a full report on this model..
-
-On my first attempt I Added a to layer the pretrained distil-BERT and
-trained it while fine-tuning at the same time (with a relatively hight learning-rate)
-and well it didn't go very well as the model quikely over-fitted and learning was too unstable
-(early stopping triggered at epoch 6 which means only three epohs of actaul learning).
-[here](report.md#run-2025-11-29_16-26) is some more info about this attempt.
-
-I decreased threshold for evaluation during training to prevent early-stopping unless it's needed,
-this technique worked very well with feature-extracted variant of this model but didn't work for this one.
-In fact it over-fitted even quicker and stopped-early ar epoch 5.
-[here](report.md#run-2025-12-23_18-12) is some more info about this attempt
-
-Finally I changed every thing from model architecture to training loop to overcome this.
-The problem, clearly was over-fitting, so I added a warm-up and a scheduler,
-reduced head from two layers to one layer and changed the dropout rate (from 0.3 to 0.1).
-with all these changes, the model trained much better althou it did became over-fitted so quickly again.
-[here](report.md#run-2026-01-03_20-47) is a full report on last version of this model.
-
-
-### Comparison
-this tabel is a brief comparison of models. look [here](report.md#comparison) for a full comparison.
-(*TL;DR*: fine-tuned transformer is clearly superior becuase of a shorter training time and higher metrics.)
-
-model | training time | f1 score | precision | Recall
----|:---:|:---:|:---:|:---:
-bilstm lasttoken|1:26|48|42|57
-bilstm maxpool|0:46|54|49|61
-transformer featureextract|1:15|47|43|53
-transformer finetune|0:32|59|55|56
-
+Fine-tuning achieved the highest micro-F1. The November 2025 fine-tuning run achieved the highest macro-F1 (51.38%), while max-pooling outperformed last-token BiLSTM in the saved experiments. The reported training times are retained from the original comparison; hardware and timing procedure were not recorded, so they should be treated as rough historical figures rather than reproducible benchmarks. For the full comparison and experiment notes, see the [report](report.md#test-results).
 
 ---
 
-## Issues and Further Expansion
-The most important issue is of course the low accuracy of models.
-Also the code could be more dinamic if loss functions and optimizers weren't hardcoded and
-could be changed in the configurations.
-For further expansions we could try othe models and architectures or
-try to train the already existing models (transformer-fine-tune especially) batter,
-seeking a solution for its over-fitting problem.
-Also a test unit is needed for all these stuff because the project is kinda large now
-and testing every thing by hand is quite hard.
+## Issues and Future Work
+The models still have room for improvement. Also the code could be more dinamic if loss functions and optimizers weren't hardcoded and could be changed in the configurations.
+For further expansions we could try othe models and architectures or try to improve the already existing models (especially transformer fine-tuning), seeking a solution for its over-fitting problem.
+Also a test unit is needed for because manually checking everything is becoming difficult.
 
 ---
 

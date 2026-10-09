@@ -1,169 +1,53 @@
-# **Report**
-This is a full report on experiments with Emotion Classifier models, results, diagnostics and comparisions and dataset analysis.
+# Emotion Classification Experiments
 
-**note**: in all of these experiments, evaluation and analysis is done on best model, not last model.
+> **AI assistance:** I used GitHub Copilot to organize and draft this report from the project's code, configurations, logs, metrics, and plots. The implementation and experiments are my work; the report wording and synthesis are AI-assisted. I am responsible for reviewing the claims before publication.
 
-- [dataset](#dataset)
-- [BiLSTM last-token](#bilstm-last-token)
-    - [1st run](#run-2025-11-29_13-08)
-- [BiLSTM max-pool](#bilstm-max-pool)
-    - [1st run](#run-2025-11-28_23-30)
-- [Transformer feature-extract](#transformer-feature-extract)
-    - [1st run](#run-2025-11-29_15-22)
-    - [2nd run](#run-2025-12-23_15-50)
-    - [3rd run](#run-2026-01-04_22-06)
-- [Transformer fine-tune](#transformer-fine-tune)
-    - [1st run](#run-2025-11-29_16-26)
-    - [2nd run](#run-2025-12-23_18-12)
-    - [3rd run](#run-2026-01-03_20-47)
-- [Comparison](#comparison)
+This project compares neural approaches for multi-label emotion classification on GoEmotions. The report summarizes the saved test results; per-run configurations and detailed metrics remain in `outputs/`.
 
-# Dataset
-I used GoEmotions dataset for this project, which is a multilabel dataset of sentences (gathered from reddit comments)
-by Google. Each sentence either has one or more emotions or is labeled as *neutral*.
-There are 27 emotions (plus neutral), and each sentence is labeled with these 28 classes.
-This dataset is splited to training, evaluation and test sets by authors (proporsions are 80/10/10).
-<!-- You can find more about it on its [official website](link). -->
+## Data and evaluation
 
-GoEmotion is an imbalanced dataset with an inherited cooccurance of labels.
-Simply some labels occure more and some less, and some occure together more often.
-You can see that inherited structure on the charts below:
+[GoEmotions](https://aclanthology.org/2020.acl-main.372/) contains English Reddit comments labeled with 27 emotions plus `neutral`. A comment may have multiple labels. This project loads the `simplified` dataset configuration and uses its train, validation, and test splits. The dataset is downloaded at runtime rather than stored in this repository.
 
-![number of label samples in train set](/outputs/dataset/train/plots/num_label_samples.png)
-![number of label samples in eval set](/outputs/dataset/eval/plots/num_label_samples.png)
-![number of label samples in test set](/outputs/dataset/test/plots/num_label_samples.png)
+Text is tokenized with `bert-base-uncased` and truncated to 128 tokens. The BiLSTM variants use a trainable embedding; Transformer variants use `distilbert-base-uncased`, either frozen as a feature extractor or fine-tuned. The saved runs use batch size 32 and seed 418. Checkpoints were selected by validation micro-F1; per-class decision thresholds were tuned on validation and then used for test evaluation. Micro-F1 summarizes decisions across labels, while macro-F1 weights labels equally. Both scores are useful here because the dataset is imbalanced.
 
+These runs are exploratory, not a controlled architecture-only comparison: learning rates, dropout, training thresholds, and model-head designs changed between runs. The exact historical source revision for each run is not saved.
 
-![label cooccurance heatmap - train set](/outputs/dataset/train/plots/cooccurance_heatmap.png)
-![label cooccurance heatmap - eval set](/outputs/dataset/eval/plots/cooccurance_heatmap.png)
-![label cooccurance heatmap - test set](/outputs/dataset/test/plots/cooccurance_heatmap.png)
+![Training split label distribution](outputs/dataset/plots/label_distribution_train.png)
+![Label co-occurrence by Jaccard similarity](outputs/dataset/plots/cooccurrence_jaccard_similarity.png)
 
----
+## Test results
 
-# BiLSTM last-token
-Bi-Directional Long Short-Term Memory Models are one of the models used for NLP,
-they process sentences like time series in two directions.
-Here I used a *bert-base-uncased* tokenizer to break sentences into tokens,
-the model embeds each token into a 128-dimentional vactor and processes these vectors as a time serie
-through a three layer LSMT model (each with 256 hidden units and 0.25 dropout rate)
-and chooses the last token to percive the meaning in the sentence,
-it passes that tokens vector to a Linear layer that extracts the emotions and classifies the sentence.
-[This](/src/emotion_classifier/models/bilstm.py) is the code if you wanted to check it out.
+All values below come from the saved test result for each run. Precision and recall are micro-averaged; lower Hamming loss is better. Select a run date to view its full per-class metrics and prediction statistics.
 
-## run 2025-11-29_13-08
-trained with 5e-4 learning-rate and adam optimizer for 15 epochs (wasn't stopped earlier) and achived the expected metrics.
-[Here](/outputs/bilstm-last-token/2025-11-29_13-08/train.log) is the training log.
+| Model | Run and detailed results | Micro-F1 | Macro-F1 | Precision | Recall | Hamming loss |
+|---|---|---:|---:|---:|---:|---:|
+| BiLSTM, last-token | [2025-11-29](outputs/bilstm-last-token/2025-11-29_13-08/eval/test_results.json) | 48.98% | 39.01% | 42.85% | 57.17% | 0.0496 |
+| BiLSTM, max-pool | [2025-11-28](outputs/bilstm-max-pool/2025-11-28_23-30/eval/test_results.json) | 54.76% | 44.01% | 49.23% | 61.70% | 0.0425 |
+| Transformer, feature extraction | [2025-11-29](outputs/transformer-feature-extract/2025-11-29_15-22/eval/test_results.json) | 47.51% | 33.63% | 41.64% | 55.29% | 0.0509 |
+| Transformer, feature extraction | [2025-12-23](outputs/transformer-feature-extract/2025-12-23_15-50/eval/test_results.json) | 49.37% | 38.51% | 43.38% | 57.28% | 0.0489 |
+| Transformer, feature extraction | [2026-01-04](outputs/transformer-feature-extract/2026-01-04_22-06/eval/test_results.json) | 47.83% | 35.07% | 43.03% | 53.83% | 0.0489 |
+| Transformer, fine-tuning | [2025-11-29](outputs/transformer-fine-tune/2025-11-29_16-26/eval/test_results.json) | 58.66% | **51.38%** | 53.12% | **65.49%** | 0.0384 |
+| Transformer, fine-tuning | [2025-12-23](outputs/transformer-fine-tune/2025-12-23_18-12/eval/test_results.json) | 58.34% | 50.64% | 53.41% | 64.28% | 0.0382 |
+| Transformer, fine-tuning | [2026-01-03](outputs/transformer-fine-tune/2026-01-03_20-47/eval/test_results.json) | **59.87%** | 50.40% | **55.30%** | 65.26% | **0.0364** |
 
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Analysis and Diagnostics
+Fine-tuning gave the strongest overall results in these runs. The January run had the highest micro-F1 and lowest Hamming loss; the November run had the highest macro-F1 and recall. Max-pooling was the stronger of the two BiLSTM variants. Since configurations changed between runs, these results do not establish that architecture alone caused the differences.
 
----
+## Experiment progression
 
-# BiLSTM max-pool
-Bi-Directional Long Short-Term Memory Models are one of the models used for NLP,
-they process sentences like time series in two directions.
-Here I used a *bert-base-uncased* tokenizer to break sentences into tokens,
-the model embeds each token into a 128-dimentional vactor and processes these vectors as a time serie
-through a three layer LSMT model (each with 256 hidden units and 0.25 dropout rate)
-and chooses the token with maximum value to percive the meaning in the sentence,
-it passes that tokens vector to a Linear layer that extracts the emotions and classifies the sentence.
-[This](/src/emotion_classifier/models/bilstm.py) is the code if you wanted to check it out.
+- **BiLSTM:** The last-token model was the first baseline and took longer to train than expected. Replacing last-token selection with masked max-pooling was an unexpected improvement: the README's original comparison records both better scores and shorter training time for max-pooling. The saved logs show 15 epochs for last-token and early stopping after 11 epochs for max-pooling.
+- **Transformer feature extraction:** The first run used a 0.6 threshold for validation metrics, stopped after seven logged epochs, and saved its best checkpoint at epoch four. The experiment notes attributed the early stopping in part to the threshold. Lowering it to 0.3 in the December run improved the recorded test metrics, making that the strongest feature-extraction run. A January run with lower dropout did not improve on it.
+- **Transformer fine-tuning:** The first two runs used a two-layer head and were described in the notes as unstable and prone to overfitting; lowering the validation threshold helped the feature-extraction run but did not prevent early stopping here. The January attempt added warm-up and a scheduler, reduced the head to one layer, lowered dropout from 0.3 to 0.1, and lowered the encoder learning rate. It achieved the best micro-F1, but its training log still shows validation loss rising after its minimum, so overfitting remained a concern.
 
-## run 2025-11-28_23-30
-trained with 5e-4 learning-rate and adam optimizer for 11 epochs (stopped earlier, best model saved at epoch 8)
-and surprisingly achived better metrics the than last-token variant.
-[Here](/outputs/bilstm-max-pool/2025-11-28_23-30/train.log) is the training log.
+The README's earlier summary recorded training durations of 1:26 for last-token BiLSTM, 0:46 for max-pooling, 1:15 for feature extraction, and 0:32 for fine-tuning. The timing format, hardware, and measurement procedure were not documented, so treat these as historical rough comparisons rather than reproducible benchmarks.
 
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Analysis and Diagnostics
+![Loss during the January fine-tuning run](outputs/transformer-fine-tune/2026-01-03_20-47/plots/loss_curve.png)
 
----
+## Limitations and future work
 
-# Transformer feature-extract
-In my first try with transformers i added a two layer fully-connected neural-network to a pretrained Encoder (distil-BERT)
-as a feature extractor that uses BERT's output to find out the emotions in the sentence.
+These results are a useful baseline, not a final or broadly validated classifier. Only one seed is represented, runs changed multiple settings at once, and no trained checkpoint is included. Performance may also differ on data outside English Reddit comments.
 
-## run 2025-11-29_15-22
-trained with 5e-4 learning-rate and adam optimizer for 7 epochs (stopped earlier, best model saved at epoch 4)
-well it didn't work as well as i thought and was stopped too early, probably beacause of a bad choice of threshold
-that effected evaluation and triggered early stopping. 
+Useful next steps are to repeat the leading configurations with multiple seeds, compare model variants while keeping other settings fixed, and investigate regularization and learning-rate choices for the fine-tuned Transformer. The current training setup also hardcodes its loss and optimizer; making these configurable and adding automated tests would improve extensibility and reliability. Other architectures can then be compared against the same baseline and evaluation protocol.
 
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Known Issues
+## Artifacts
 
-## run 2025-12-23_15-50
-I changed the configurations and tried again, which turned out to be the best performance of this model.
-I lowered the threshold for evaluation during training to prevent early-stopping unless it's needed
-(the threshold for evaluation during training was 0.6 before that wasn't a good idea really, decreased to 0.3).
-
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Analysis and Diagnostics
-
-## run 2026-01-04_22-06
-later when I changed learning process and model architecture for fine-tuned model
-(reduced the head  to one layer and lower dropout rate),
-I trained this model for last time as well but it became worse (probably because the head wasn't deep enough).
-
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Analysis and Diagnostics
-### Known Issues
-
----
-
-
-# Transformer fine-tune
-Fine-tuning is well known as a way to specialize a pretrained model for a task,
-so I Added a two layer head to pretrained distil-BERT encoder and
-trained it while fine-tuning BERT model at the same time (with a relatively lower learning-rate)
-
-## run 2025-11-29_16-26
-and well it didn't go very well as the model quikely over-fitted and learning was too unstable
-(early stopping triggered at epoch 6 which means only three epohs of actaul learning).
-
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Known Issues
-
-## run 2025-12-23_18-12
-I decreased threshold for evaluation during training to prevent early-stopping unless it's needed,
-this technique worked very well with feature-extracted variant of this model but didn't work for this one.
-In fact it over-fitted even quicker and stopped-early ar epoch 5.
-
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Known Issues
-
-## run 2026-01-03_20-47
-Finally I changed every thing from model architecture to training loop to overcome this.
-The problem, clearly was over-fitting, so I added a warm-up and a scheduler,
-reduced head from two layers to one layer and changed the dropout rate (from 0.3 to 0.1).
-with all these changes, the model trained much better althou it did became over-fitted so quickly again.
-
-### Training
-### Evaluation Result
-### Observed Beheivior
-### Analysis and Diagnostics
-
----
-
-# Comparison
-*TL;DR*: fine-tuned transformer is clearly superior becuase of a shorter training time and higher metrics.
-
-model | training time | f1 score | precision | Recall
----|:---:|:---:|:---:|:---:
-bilstm lasttoken|1:26|48|42|57
-bilstm maxpool|0:46|54|49|61
-transformer featureextract|1:15|47|43|53
-transformer finetune|0:32|59|55|56
+Per-class metrics, confusion statistics, configurations, training logs, thresholds, and additional plots are kept with each run under `outputs/`. For example, the [January fine-tuning configuration](outputs/transformer-fine-tune/2026-01-03_20-47/config.yaml), [training log](outputs/transformer-fine-tune/2026-01-03_20-47/train.log), and [confusion statistics](outputs/transformer-fine-tune/2026-01-03_20-47/eval/confusion_stats.json) are available alongside its test metrics.
